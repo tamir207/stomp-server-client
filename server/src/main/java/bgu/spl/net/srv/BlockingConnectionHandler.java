@@ -24,7 +24,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
 
     @Override
     public void run() {
-        try (Socket sock = this.sock) { //just for automatic closing
+        try (Socket sock = this.sock) { // just for automatic closing
             int read;
 
             in = new BufferedInputStream(sock.getInputStream());
@@ -55,6 +55,15 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
 
     @Override
     public void send(T msg) {
-        //IMPLEMENT IF NEEDED
+        // IMPLEMENT IF NEEDED
+
+        try {
+            out = new BufferedOutputStream(this.sock.getOutputStream());
+            out.write(encdec.encode(msg));
+            out.flush();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 }
