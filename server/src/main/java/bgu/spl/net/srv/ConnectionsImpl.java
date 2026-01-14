@@ -1,24 +1,25 @@
 package bgu.spl.net.srv;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionsImpl <T> implements Connections<T> {
 
-    
-    private final Map<Integer, ConnectionHandler<T>> con;
+    private final Map<Integer, ConnectionHandler<T>> connectedHandlers;
+    private final Map<String, String> usernamesPasswords;
     private final Map<String, Map<Integer, Integer>> channels;
-    
+    private final Map<String, Integer> usernameID;
+
     public ConnectionsImpl(){
-        con = new WeakHashMap<>();
-        channels = new HashMap<>();
+        connectedHandlers = new ConcurrentHashMap<>();
+        usernamesPasswords = new ConcurrentHashMap<>();
+        channels = new ConcurrentHashMap<>();
+        usernameID = new ConcurrentHashMap<>();
     }
 
     @Override
     public boolean send(int connectionId, T msg){
-        ConnectionHandler<T> handler = con.get(connectionId);
+        ConnectionHandler<T> handler = connectedHandlers.get(connectionId);
         if (handler == null)
             return false;
         handler.send(msg);
@@ -29,7 +30,7 @@ public class ConnectionsImpl <T> implements Connections<T> {
     public void send(String channel, T msg){
         Map<Integer, Integer> subscribers = channels.get(channel);
         for (Map.Entry<Integer, Integer> subcriber: subscribers.entrySet()){
-            ConnectionHandler<T> handler = con.get(subcriber.getKey());
+            ConnectionHandler<T> handler = connectedHandlers.get(subcriber.getKey());
             if (handler != null)
                 handler.send(msg);
         }
@@ -50,7 +51,37 @@ public class ConnectionsImpl <T> implements Connections<T> {
     }
 
     @Override
+    public boolean addNewClient(int connectionId, ConnectionHandler<T> handler) {
+         if (connectedHandlers.containsKey(connectionId))
+            return false;
+        connectedHandlers.put(connectionId, handler);
+        return true;
+    }
+
+
+    @Override
+    public int addUser(int connectionId, String username, String password) {
+        if (!usernamesPasswords.containsKey(username)){
+            usernamesPasswords.put(username, password);
+            usernameID.put(username, connectionId);
+            return 1;
+        }
+        else if (!usernamesPasswords.get(username).equals(password)){
+            return -1;
+        }
+        else if (usernameID.containsKey(username)){
+            return 0;
+        }
+        else {
+            usernameID.put(username, connectionId);
+            return 1;
+        }
+    }
+
+
+
+    @Override
     public void disconnect(int connectionId){
-        con.remove(connectionId);
+        connectedHandlers.remove(connectionId);
     }
 }
