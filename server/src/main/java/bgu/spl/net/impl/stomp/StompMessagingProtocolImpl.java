@@ -52,7 +52,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             boolean sent = connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
         }
 
-        if (type == "CONNECT") {
+        if ("CONNECT".equals(type)) {
             /**
              * Add username as user id to connections
              * (con and channels) with value of it's connection handler instance.
@@ -88,7 +88,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                     boolean sent = connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n^@");
                 }
             }
-        } else if (type == "SUBSCRIBE") {
+        } else if ("SUBSCRIBE".equals(type)) {
             String des = headers.get("destination");
             int id = Integer.parseInt(headers.get("id"));
             if (des != null) {
@@ -100,7 +100,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                     connections.disconnect(this.connectionId);
                 }
             }
-        } else if (type == "UNSUBSCRIBE") {
+        } else if ("UNSUBSCRIBE".equals(type)) {
             String idString = headers.get("id");
             if (idString == null) {
                 connections.send(
@@ -125,7 +125,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 connections.disconnect(connectionId);
                 return;
             }
-        } else if (type == "SEND") {
+        } else if ("SEND".equals(type)) {
             String des = headers.get("destination");
             if (des == null) {
                 connections.send(
@@ -137,9 +137,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 connections.disconnect(connectionId);
                 return;
             }
-
+            
             connections.send(des, body);
-        } else if (type == "DISCONNECT") {
+        } else if ("DISCONNECT".equals(type)) {
             connections.disconnect(connectionId);
         }
         // DELETE

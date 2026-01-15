@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-
     private final Map<Integer, ConnectionHandler<T>> connectedHandlers;
     private final Map<String, Map<Integer, Integer>> channels;
     private final Map<String, Integer> usernameToID;
     private final Map<Integer, String> IDToUsername;
     private final Map<Integer, Map<Integer, String>> subscriptions;
+    int messageId;
 
     // Persistant data between sessions:
     private final Map<String, String> usernamesPasswords;
@@ -21,6 +21,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
         usernameToID = new ConcurrentHashMap<>();
         IDToUsername = new ConcurrentHashMap<>();
         subscriptions = new ConcurrentHashMap<>();
+        messageId = 1;
+    }
+
+    public Map<Integer, Integer> getSubscribers(String channel) {
+        return channels.get(channel);
     }
 
     @Override
@@ -57,7 +62,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
             Map<Integer, String> userSubs = subscriptions.get(connectionId);
             if (userSubs == null) {
-                subscriptions.put(subscriptionId, new ConcurrentHashMap<>());
+                subscriptions.put(connectionId, new ConcurrentHashMap<>());
                 userSubs = subscriptions.get(subscriptionId);
             }
             userSubs.put(subscriptionId, topic);
