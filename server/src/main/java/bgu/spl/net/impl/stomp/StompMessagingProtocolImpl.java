@@ -95,8 +95,19 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             }
         } else if (type == "SUBSCRIBE") {
             String des = headers.get("destination");
+            int id = Integer.parseInt(headers.get("id"));
             if (des != null){
-                // boolean hasSubscribed = connections.addSubscriber();
+                boolean hasSubscribed = connections.addSubscriber(this.connectionId, des, id);
+                if (!hasSubscribed){
+                    boolean sent = connections.send(connectionId,
+                            generateErrorMessage(headers.get("receipt"), "subscription failed", message,
+                                    "failed to subscribe " + this.connectionId + " to " + des));
+                    if (!sent) {
+                        logNoHandlerError(connectionId);
+                        return;
+                    }
+                    connections.disconnect(this.connectionId);
+                }
             }
 
         } else if (type == "UNSUBSCRIBE") {

@@ -13,4 +13,6 @@ public interface Connections<T> {
     boolean addNewClient(int connectionId, ConnectionHandler<T> handler);
 
     int addUser(int connectionId, String username, String password);
+
+    boolean addSubscriber(int connectionId, String topic, int subscriptionId);
 }
