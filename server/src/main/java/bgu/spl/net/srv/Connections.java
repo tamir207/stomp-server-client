@@ -16,5 +16,7 @@ public interface Connections<T> {
 
     boolean addSubscriber(int connectionId, String topic, int subscriptionId);
 
+    boolean unsubscribe(int connectionId, int subscriptionId);
+
     boolean isUserConnected(int connectionId);
 }

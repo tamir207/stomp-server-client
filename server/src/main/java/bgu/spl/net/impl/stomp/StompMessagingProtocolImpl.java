@@ -51,7 +51,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         if (receipt != null) {
             boolean sent = connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
         }
-        
+
         if (type == "CONNECT") {
             /**
              * Add username as user id to connections
@@ -67,20 +67,20 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             String clientVersion = headers.get("accept-version");
             if (!VERSION.equals(clientVersion)) {
                 boolean sent = connections.send(connectionId,
-                        generateErrorMessage(headers.get("receipt"), "unsupported version", message,
+                        generateErrorMessage(receipt, "unsupported version", message,
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
                 connections.disconnect(connectionId);
             } else {
                 int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
                 if (status == -1) {
-                    
+
                     boolean sent = connections.send(connectionId,
-                            generateErrorMessage(headers.get("receipt"), "wrong password", message,
+                            generateErrorMessage(receipt, "wrong password", message,
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
                 } else if (status == 0) {
                     boolean sent = connections.send(connectionId,
-                            generateErrorMessage(headers.get("receipt"), "user already active", message,
+                            generateErrorMessage(receipt, "user already active", message,
                                     "user with the same username already logged in"));
                     connections.disconnect(this.connectionId);
                 } else {
@@ -95,20 +95,54 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 boolean hasSubscribed = connections.addSubscriber(this.connectionId, des, id);
                 if (!hasSubscribed) {
                     boolean sent = connections.send(connectionId,
-                            generateErrorMessage(headers.get("receipt"), "subscription failed", message,
+                            generateErrorMessage(receipt, "subscription failed", message,
                                     "failed to subscribe " + this.connectionId + " to " + des));
                     connections.disconnect(this.connectionId);
                 }
             }
         } else if (type == "UNSUBSCRIBE") {
-            
+            String idString = headers.get("id");
+            if (idString == null) {
+                connections.send(
+                        connectionId,
+                        generateErrorMessage(
+                                receipt,
+                                "unsubscribe failed", message,
+                                "failed to unsubscribe because 'id' header is missing "));
+                connections.disconnect(connectionId);
+                return;
+            }
 
+            int id = Integer.parseInt(idString);
+            boolean hasUnsubscribed = connections.unsubscribe(connectionId, id);
+            if (!hasUnsubscribed) {
+                connections.send(
+                        connectionId,
+                        generateErrorMessage(
+                                receipt,
+                                "unsubscribe failed", message,
+                                "failed to unsubscribe the subscription specified doesn't exists "));
+                connections.disconnect(connectionId);
+                return;
+            }
         } else if (type == "SEND") {
+            String des = headers.get("destination");
+            if (des == null) {
+                connections.send(
+                        connectionId,
+                        generateErrorMessage(
+                                receipt,
+                                "send failed", message,
+                                "failed to send message because destination not specified. "));
+                connections.disconnect(connectionId);
+                return;
+            }
 
+            connections.send(des, body);
         } else if (type == "DISCONNECT") {
-
+            connections.disconnect(connectionId);
         }
-
+        // DELETE
         System.out.println("Type: " + type + "\nHeaders" + headers.toString() + "\nBody: " + body);
     }
 

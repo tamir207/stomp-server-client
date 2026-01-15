@@ -6,16 +6,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConnectionsImpl<T> implements Connections<T> {
 
     private final Map<Integer, ConnectionHandler<T>> connectedHandlers;
-    private final Map<String, String> usernamesPasswords;
     private final Map<String, Map<Integer, Integer>> channels;
-    private final Map<String, Integer> usernameID;
+    private final Map<String, Integer> usernameToID;
+    private final Map<Integer, String> IDToUsername;
     private final Map<Integer, Map<Integer, String>> subscriptions;
+
+    // Persistant data between sessions:
+    private final Map<String, String> usernamesPasswords;
 
     public ConnectionsImpl() {
         connectedHandlers = new ConcurrentHashMap<>();
         usernamesPasswords = new ConcurrentHashMap<>();
         channels = new ConcurrentHashMap<>();
-        usernameID = new ConcurrentHashMap<>();
+        usernameToID = new ConcurrentHashMap<>();
+        IDToUsername = new ConcurrentHashMap<>();
         subscriptions = new ConcurrentHashMap<>();
     }
 
@@ -62,6 +66,18 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
+    public boolean unsubscribe(int connectionId, int subscriptionId) {
+        Map<Integer, String> userSubs = subscriptions.get(connectionId);
+        String topic = userSubs.get(subscriptionId);
+        if (topic == null)
+            return false;
+        userSubs.remove(subscriptionId);
+        Map<Integer, Integer> foundTopic = channels.get(topic);
+        foundTopic.remove(connectionId);
+        return true;
+    }
+
+    @Override
     public boolean addNewClient(int connectionId, ConnectionHandler<T> handler) {
         if (connectedHandlers.containsKey(connectionId))
             return false;
@@ -73,21 +89,36 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public int addUser(int connectionId, String username, String password) {
         if (!usernamesPasswords.containsKey(username)) {
             usernamesPasswords.put(username, password);
-            usernameID.put(username, connectionId);
+            usernameToID.put(username, connectionId);
+            IDToUsername.put(connectionId, username);
             return 1;
         } else if (!usernamesPasswords.get(username).equals(password)) {
             return -1;
-        } else if (usernameID.containsKey(username)) {
+        } else if (usernameToID.containsKey(username)) {
             return 0;
         } else {
-            usernameID.put(username, connectionId);
+            usernameToID.put(username, connectionId);
+            IDToUsername.put(connectionId, username);
             return 1;
         }
     }
 
     @Override
     public void disconnect(int connectionId) {
+        String username = IDToUsername.get(connectionId);
+
         connectedHandlers.remove(connectionId);
+        usernameToID.remove(username);
+        IDToUsername.remove(connectionId);
+
+        Map<Integer, String> userSubs = subscriptions.get(connectionId);
+        subscriptions.remove(connectionId);
+
+        for (Map.Entry<Integer, String> registeredChannels : userSubs.entrySet()) {
+            String channelName = registeredChannels.getValue();
+            Map<Integer, Integer> channel = channels.get(channelName);
+            channel.remove(connectionId);
+        }
     }
 
     @Override
