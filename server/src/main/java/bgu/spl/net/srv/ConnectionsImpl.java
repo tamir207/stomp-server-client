@@ -9,12 +9,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private final Map<String, String> usernamesPasswords;
     private final Map<String, Map<Integer, Integer>> channels;
     private final Map<String, Integer> usernameID;
+    private final Map<Integer, Map<Integer, String>> subscriptions;
 
     public ConnectionsImpl() {
         connectedHandlers = new ConcurrentHashMap<>();
         usernamesPasswords = new ConcurrentHashMap<>();
         channels = new ConcurrentHashMap<>();
         usernameID = new ConcurrentHashMap<>();
+        subscriptions = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -48,6 +50,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 foundTopic = channels.get(topic);
             }
             foundTopic.put(connectionId, subscriptionId);
+
+            Map<Integer, String> userSubs = subscriptions.get(connectionId);
+            if (userSubs == null) {
+                subscriptions.put(subscriptionId, new ConcurrentHashMap<>());
+                userSubs = subscriptions.get(subscriptionId);
+            }
+            userSubs.put(subscriptionId, topic);
         }
         return true;
     }
@@ -80,4 +89,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void disconnect(int connectionId) {
         connectedHandlers.remove(connectionId);
     }
+
+    @Override
+    public boolean isUserConnected(int connectionId) {
+        return this.connectedHandlers.get(connectionId) != null;
+    }
+
 }

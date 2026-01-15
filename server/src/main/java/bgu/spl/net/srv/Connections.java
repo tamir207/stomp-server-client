@@ -15,4 +15,6 @@ public interface Connections<T> {
     int addUser(int connectionId, String username, String password);
 
     boolean addSubscriber(int connectionId, String topic, int subscriptionId);
+
+    boolean isUserConnected(int connectionId);
 }

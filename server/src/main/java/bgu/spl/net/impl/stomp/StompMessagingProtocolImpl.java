@@ -41,6 +41,17 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             body += lines[i] + "\n";
         }
 
+        boolean connected = connections.isUserConnected(connectionId);
+        if (!connected) {
+            System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
+            return;
+        }
+
+        String receipt = headers.get("receipt");
+        if (receipt != null) {
+            boolean sent = connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
+        }
+        
         if (type == "CONNECT") {
             /**
              * Add username as user id to connections
@@ -58,59 +69,39 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 boolean sent = connections.send(connectionId,
                         generateErrorMessage(headers.get("receipt"), "unsupported version", message,
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
-                if (!sent) {
-                    logNoHandlerError(connectionId);
-                    return;
-                }
-
                 connections.disconnect(connectionId);
             } else {
                 int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
                 if (status == -1) {
+                    
                     boolean sent = connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "wrong password", message,
                                     "Client tried to connect with wrong password"));
-                    if (!sent) {
-                        logNoHandlerError(connectionId);
-                        return;
-                    }
                     connections.disconnect(this.connectionId);
                 } else if (status == 0) {
                     boolean sent = connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "user already active", message,
                                     "user with the same username already logged in"));
-                    if (!sent) {
-                        logNoHandlerError(connectionId);
-                        return;
-                    }
                     connections.disconnect(this.connectionId);
                 } else {
                     this.username = headers.get("login");
                     boolean sent = connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n^@");
-                    if (!sent) {
-                        logNoHandlerError(connectionId);
-                        return;
-                    }
                 }
             }
         } else if (type == "SUBSCRIBE") {
             String des = headers.get("destination");
             int id = Integer.parseInt(headers.get("id"));
-            if (des != null){
+            if (des != null) {
                 boolean hasSubscribed = connections.addSubscriber(this.connectionId, des, id);
-                if (!hasSubscribed){
+                if (!hasSubscribed) {
                     boolean sent = connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "subscription failed", message,
                                     "failed to subscribe " + this.connectionId + " to " + des));
-                    if (!sent) {
-                        logNoHandlerError(connectionId);
-                        return;
-                    }
                     connections.disconnect(this.connectionId);
                 }
             }
-
         } else if (type == "UNSUBSCRIBE") {
+            
 
         } else if (type == "SEND") {
 
@@ -124,10 +115,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
     @Override
     public boolean shouldTerminate() {
         return shouldTerminate;
-    }
-
-    private void logNoHandlerError(int connectionId) {
-        System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
     }
 
     private String generateErrorMessage(String receiptID, String message, String body, String description) {

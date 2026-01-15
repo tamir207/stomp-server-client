@@ -1,7 +1,6 @@
 package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
-import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.StompMessagingProtocol;
 
 import java.io.IOException;
@@ -12,7 +11,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class Reactor<T> implements Server<T> {
@@ -27,7 +25,7 @@ public class Reactor<T> implements Server<T> {
     private final ConcurrentLinkedQueue<Runnable> selectorTasks = new ConcurrentLinkedQueue<>();
 
     private final ConnectionsImpl<T> connections = new ConnectionsImpl<>();
-    private final AtomicInteger idGenerator = new AtomicInteger();
+    private int idGenerator;
 
 
     public Reactor(
@@ -40,6 +38,7 @@ public class Reactor<T> implements Server<T> {
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.readerFactory = readerFactory;
+        this.idGenerator = 1;
     }
 
     @Override
@@ -112,7 +111,7 @@ public class Reactor<T> implements Server<T> {
                 clientChan,
                 this);
 
-        int id = this.idGenerator.getAndIncrement();
+        int id = idGenerator++;
         this.connections.addNewClient(id, handler);
         protocol.start(id, connections, handler);
 
