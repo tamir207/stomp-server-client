@@ -152,6 +152,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             connections.send(des, body);
         } else if ("DISCONNECT".equals(type)) {
             connections.disconnect(connectionId);
+            // shouldTerminate = true; Add later
         }
         // DELETE
         System.out.println("Type: " + type + "\nHeaders" + headers.toString() + "\nBody: " + body);
