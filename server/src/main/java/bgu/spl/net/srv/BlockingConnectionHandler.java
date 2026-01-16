@@ -40,6 +40,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             }
 
         } catch (IOException ex) {
+            System.out.println("Massesage failed in thread: " + ex.getMessage());
             ex.printStackTrace();
         }
 
@@ -61,6 +62,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             out.flush();
 
         } catch (IOException ex) {
+            System.out.println("Massesage: " + msg);
             System.err.println("Error sending messages in handler");
             ex.printStackTrace();
         }

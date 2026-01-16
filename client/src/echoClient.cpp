@@ -23,7 +23,9 @@ int main (int argc, char *argv[]) {
         const short bufsize = 1024;
         char buf[bufsize];
         std::cin.getline(buf, bufsize);
-		std::string line(buf);
+		// std::string line(buf);
+        std::string line = "CONNECT\nreceipt: 12\n";
+        line += '\0';
 		int len=line.length();
         if (!connectionHandler.sendLine(line)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;

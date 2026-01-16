@@ -102,6 +102,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
     @Override
     public int addUser(int connectionId, String username, String password) {
         if (!usernamesPasswords.containsKey(username)) {
+            System.out.println("=======================");
+            System.out.println("==========connectionId======= " + connectionId);
+            System.out.println("==========username=========== " + username);
+            System.out.println("==========password=========== " + password);
+            System.out.println("=======================");
             usernamesPasswords.put(username, password);
             usernameToID.put(username, connectionId);
             IDToUsername.put(connectionId, username);
@@ -121,6 +126,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void disconnect(int connectionId) {
         String username = IDToUsername.get(connectionId);
 
+        ConnectionHandler<T> handler = connectedHandlers.get(connectionId);
+        try {
+            handler.close();
+        } catch (Exception e) {
+            System.err.println("Failed to close connection");
+        }
+
         connectedHandlers.remove(connectionId);
         usernameToID.remove(username);
         IDToUsername.remove(connectionId);
@@ -128,10 +140,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
         Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
 
-        for (Map.Entry<String, String> registeredChannels : userSubs.entrySet()) {
-            String channelName = registeredChannels.getValue();
-            Map<Integer, String> channel = channels.get(channelName);
-            channel.remove(connectionId);
+        if (userSubs != null) {
+            for (Map.Entry<String, String> registeredChannels : userSubs.entrySet()) {
+                String channelName = registeredChannels.getValue();
+                Map<Integer, String> channel = channels.get(channelName);
+                channel.remove(connectionId);
+            }
         }
     }
 

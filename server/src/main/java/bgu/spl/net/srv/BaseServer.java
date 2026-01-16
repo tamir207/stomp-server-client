@@ -43,7 +43,7 @@ public abstract class BaseServer<T> implements Server<T> {
             while (!Thread.currentThread().isInterrupted()) {
 
                 Socket clientSock = serverSock.accept();
-
+                System.out.println("new client!!!");
 
                 StompMessagingProtocol<T> protocol = protocolFactory.get();
                 MessageEncoderDecoder<T> encDec = encdecFactory.get();
@@ -56,8 +56,8 @@ public abstract class BaseServer<T> implements Server<T> {
                 execute(handler);
 
                 int id = idGenerator++;
-                //protocol.start(id, connections, handler);
                 this.connections.addNewClient(id, handler);
+                protocol.start(id, connections);
             }
         } catch (IOException ex) {
         }

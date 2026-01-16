@@ -26,15 +26,20 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         HashMap<String, String> headers = new HashMap<>();
         String body = "";
 
+        System.out.println("=======================");
+        System.out.println(message);
+        System.out.println("=======================");
+
         String[] lines = message.split("\n");
+
         type = lines[0];
         int i = 1;
-        for (; i < lines.length - 1 && !lines[i].isEmpty(); i++) {
+        for (; i < lines.length && !lines[i].isEmpty(); i++) {
             String[] header = lines[i].split(":");
             headers.put(header[0], header[1]);
         }
 
-        for (; i < lines.length - 1; i++) {
+        for (; i < lines.length; i++) {
             body += lines[i] + "\n";
         }
 
@@ -45,7 +50,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
 
         String receipt = headers.get("receipt");
         if (receipt != null) {
-            connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
+            connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n" + '\0');
         }
 
         if ("CONNECT".equals(type)) {
@@ -56,6 +61,10 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
                 connections.disconnect(connectionId);
             } else {
+                System.out.println("ffffffffffffffffffffffff");
+                System.out.println(headers.get("passcode"));
+                System.out.println(headers);
+                System.out.println("ffffffffffffffffffffffff");
                 int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
                 if (status == -1) {
                     connections.send(connectionId,
@@ -68,7 +77,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                     "user with the same username already logged in"));
                     connections.disconnect(this.connectionId);
                 } else {
-                    connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n^@");
+                    connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
                 }
             }
         } else if ("SUBSCRIBE".equals(type)) {
