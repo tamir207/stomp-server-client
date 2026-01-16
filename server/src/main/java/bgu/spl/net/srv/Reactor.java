@@ -113,7 +113,7 @@ public class Reactor<T> implements Server<T> {
 
         int id = idGenerator++;
         this.connections.addNewClient(id, handler);
-        protocol.start(id, connections, handler);
+        protocol.start(id, connections);
 
         clientChan.register(selector, SelectionKey.OP_READ, handler);
     }

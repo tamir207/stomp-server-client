@@ -1,6 +1,7 @@
 package bgu.spl.net.impl.stomp;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.ConnectionHandler;
@@ -11,16 +12,12 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
     private boolean shouldTerminate = false;
     private int connectionId;
     private Connections<String> connections;
-    private ConnectionHandler<String> handler;
     final String VERSION = "1.2";
-    private String username;
 
     @Override
-    public void start(int connectionId, Connections<String> connections, ConnectionHandler<String> handler) {
+    public void start(int connectionId, Connections<String> connections) {
         this.connectionId = connectionId;
         this.connections = connections;
-        this.handler = handler;
-        this.username = "";
     }
 
     @Override
@@ -41,60 +38,45 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             body += lines[i] + "\n";
         }
 
-        boolean connected = connections.isUserConnected(connectionId);
-        if (!connected) {
+        if (!connections.isUserConnected(connectionId)) {
             System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
             return;
         }
 
         String receipt = headers.get("receipt");
         if (receipt != null) {
-            boolean sent = connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
+            connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n^@");
         }
 
         if ("CONNECT".equals(type)) {
-            /**
-             * Add username as user id to connections
-             * (con and channels) with value of it's connection handler instance.
-             * If needed, on the creation of StompMessagingProtoolImpl, pass the
-             * connectionHandler
-             * (who is the creator of this StompProtocol) as instance.
-             * 
-             * The only connection that is connections from the start is the
-             * sqlServer (connectionHandler)
-             * Which is added manually from the Reactor/TPC class.
-             */
             String clientVersion = headers.get("accept-version");
             if (!VERSION.equals(clientVersion)) {
-                boolean sent = connections.send(connectionId,
+                connections.send(connectionId,
                         generateErrorMessage(receipt, "unsupported version", message,
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
                 connections.disconnect(connectionId);
             } else {
                 int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
                 if (status == -1) {
-
-                    boolean sent = connections.send(connectionId,
+                    connections.send(connectionId,
                             generateErrorMessage(receipt, "wrong password", message,
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
                 } else if (status == 0) {
-                    boolean sent = connections.send(connectionId,
+                    connections.send(connectionId,
                             generateErrorMessage(receipt, "user already active", message,
                                     "user with the same username already logged in"));
                     connections.disconnect(this.connectionId);
                 } else {
-                    this.username = headers.get("login");
-                    boolean sent = connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n^@");
+                    connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n^@");
                 }
             }
         } else if ("SUBSCRIBE".equals(type)) {
             String des = headers.get("destination");
-            int id = Integer.parseInt(headers.get("id"));
             if (des != null) {
-                boolean hasSubscribed = connections.addSubscriber(this.connectionId, des, id);
+                boolean hasSubscribed = connections.addSubscriber(this.connectionId, des, headers.get("id"));
                 if (!hasSubscribed) {
-                    boolean sent = connections.send(connectionId,
+                    connections.send(connectionId,
                             generateErrorMessage(receipt, "subscription failed", message,
                                     "failed to subscribe " + this.connectionId + " to " + des));
                     connections.disconnect(this.connectionId);
@@ -113,8 +95,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 return;
             }
 
-            int id = Integer.parseInt(idString);
-            boolean hasUnsubscribed = connections.unsubscribe(connectionId, id);
+            boolean hasUnsubscribed = connections.unsubscribe(connectionId, idString);
             if (!hasUnsubscribed) {
                 connections.send(
                         connectionId,
@@ -136,8 +117,29 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                 "failed to send message because destination not specified. "));
                 connections.disconnect(connectionId);
                 return;
+            } else {
+                Map<Integer, String> subscribers = connections.getSubscribers(des);
+                if (subscribers.get(connectionId) == null) {
+                    connections.send(connectionId, generateErrorMessage(
+                            receipt,
+                            "Unauthorized",
+                            message,
+                            "Can't send message to unsubcribed topic. Please subscribe first."));
+                    connections.disconnect(connectionId);
+                    return;
+                } else if (subscribers != null) {
+                    for (Map.Entry<Integer, String> subcriber : subscribers.entrySet()) {
+                        String subscriptionId = subcriber.getValue();
+                        int messageId = connections.getMessageId();
+                        String msg = "MESSAGE\nsubscription:" + subscriptionId +
+                                "\nmessage-id:" + messageId + "\ndestination:" + des + "\n\n" + body + "^@";
+                        if (connectionId != subcriber.getKey()) {
+                            connections.send(subcriber.getKey(), msg);
+                        }
+                    }
+                }
             }
-            
+
             connections.send(des, body);
         } else if ("DISCONNECT".equals(type)) {
             connections.disconnect(connectionId);

@@ -2,14 +2,15 @@ package bgu.spl.net.srv;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-    private final Map<Integer, ConnectionHandler<T>> connectedHandlers;
-    private final Map<String, Map<Integer, Integer>> channels;
+    private final Map<Integer, ConnectionHandler<T>> connectedHandlers;// Map<SubscriptionID, ConnectionHandler<T>>
+    private final Map<String, Map<Integer, String>> channels;// Map<ChannelName, Map<ConnectionID, SubscriptionID>>
     private final Map<String, Integer> usernameToID;
     private final Map<Integer, String> IDToUsername;
-    private final Map<Integer, Map<Integer, String>> subscriptions;
-    int messageId;
+    private final Map<Integer, Map<String, String>> subscriptions;// Map<ConnectionID, Map<SubscriptionID, ChannelName>>
+    private AtomicInteger messageId;
 
     // Persistant data between sessions:
     private final Map<String, String> usernamesPasswords;
@@ -21,11 +22,17 @@ public class ConnectionsImpl<T> implements Connections<T> {
         usernameToID = new ConcurrentHashMap<>();
         IDToUsername = new ConcurrentHashMap<>();
         subscriptions = new ConcurrentHashMap<>();
-        messageId = 1;
+        messageId = new AtomicInteger(1);
     }
 
-    public Map<Integer, Integer> getSubscribers(String channel) {
+    @Override
+    public Map<Integer, String> getSubscribers(String channel) {
         return channels.get(channel);
+    }
+
+    @Override
+    public int getMessageId() {
+        return messageId.get();
     }
 
     @Override
@@ -34,33 +41,35 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (handler == null)
             return false;
         handler.send(msg);
+        messageId.incrementAndGet();
         return true;
     }
 
     @Override
     public void send(String channel, T msg) {
-        Map<Integer, Integer> subscribers = channels.get(channel);
-        for (Map.Entry<Integer, Integer> subcriber : subscribers.entrySet()) {
+        Map<Integer, String> subscribers = channels.get(channel);
+        for (Map.Entry<Integer, String> subcriber : subscribers.entrySet()) {
             ConnectionHandler<T> handler = connectedHandlers.get(subcriber.getKey());
             if (handler != null)
                 handler.send(msg);
         }
+        messageId.incrementAndGet();
     }
 
     @Override
-    public boolean addSubscriber(int connectionId, String topic, int subscriptionId) {
+    public boolean addSubscriber(int connectionId, String topic, String subscriptionId) {
         if (topic == null) {
             return false;
         }
         synchronized (this) {
-            Map<Integer, Integer> foundTopic = channels.get(topic);
+            Map<Integer, String> foundTopic = channels.get(topic);
             if (foundTopic == null) {
                 channels.put(topic, new ConcurrentHashMap<>());
                 foundTopic = channels.get(topic);
             }
             foundTopic.put(connectionId, subscriptionId);
 
-            Map<Integer, String> userSubs = subscriptions.get(connectionId);
+            Map<String, String> userSubs = subscriptions.get(connectionId);
             if (userSubs == null) {
                 subscriptions.put(connectionId, new ConcurrentHashMap<>());
                 userSubs = subscriptions.get(subscriptionId);
@@ -71,13 +80,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public boolean unsubscribe(int connectionId, int subscriptionId) {
-        Map<Integer, String> userSubs = subscriptions.get(connectionId);
+    public boolean unsubscribe(int connectionId, String subscriptionId) {
+        Map<String, String> userSubs = subscriptions.get(connectionId);
         String topic = userSubs.get(subscriptionId);
         if (topic == null)
             return false;
         userSubs.remove(subscriptionId);
-        Map<Integer, Integer> foundTopic = channels.get(topic);
+        Map<Integer, String> foundTopic = channels.get(topic);
         foundTopic.remove(connectionId);
         return true;
     }
@@ -116,12 +125,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
         usernameToID.remove(username);
         IDToUsername.remove(connectionId);
 
-        Map<Integer, String> userSubs = subscriptions.get(connectionId);
+        Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
 
-        for (Map.Entry<Integer, String> registeredChannels : userSubs.entrySet()) {
+        for (Map.Entry<String, String> registeredChannels : userSubs.entrySet()) {
             String channelName = registeredChannels.getValue();
-            Map<Integer, Integer> channel = channels.get(channelName);
+            Map<Integer, String> channel = channels.get(channelName);
             channel.remove(connectionId);
         }
     }

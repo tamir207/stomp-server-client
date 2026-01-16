@@ -1,6 +1,7 @@
 package bgu.spl.net.srv;
 
 import java.io.IOException;
+import java.util.Map;
 
 public interface Connections<T> {
 
@@ -14,9 +15,14 @@ public interface Connections<T> {
 
     int addUser(int connectionId, String username, String password);
 
-    boolean addSubscriber(int connectionId, String topic, int subscriptionId);
+    boolean addSubscriber(int connectionId, String topic, String subscriptionId);
 
-    boolean unsubscribe(int connectionId, int subscriptionId);
+    boolean unsubscribe(int connectionId, String subscriptionId);
 
     boolean isUserConnected(int connectionId);
+
+    Map<Integer, String> getSubscribers(String channel);
+
+    int getMessageId();
+
 }
