@@ -8,6 +8,6 @@ class CommandEncoder
 private:
 public:
     CommandEncoder();
-    void encode(std::string msg);
+    std::string encode(std::string msg);
     std::vector<std::string> split(std::string s, char delimiter);
 };
