@@ -9,5 +9,4 @@ private:
 public:
     CommandEncoder();
     std::string encode(std::string msg);
-    std::vector<std::string> split(std::string s, char delimiter);
 };

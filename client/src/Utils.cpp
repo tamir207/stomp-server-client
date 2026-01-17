@@ -1,31 +1,34 @@
 #include "../include/Utils.h"
 #include <sstream>
 
-std::vector<std::string> CommandEncoder::split(std::string s, char delimiter)
+namespace Utils
 {
-    std::vector<std::string> words;
-    std::string currentWord = "";
-
-    for (size_t i = 0; i < s.length(); i++)
+    std::vector<std::string> split(const std::string& s, char delimiter)
     {
-        if (s[i] == delimiter)
+        std::vector<std::string> words;
+        std::string currentWord = "";
+
+        for (size_t i = 0; i < s.length(); i++)
         {
-            if (currentWord != "")
+            if (s[i] == delimiter)
             {
-                words.push_back(currentWord);
-                currentWord = "";
+                if (currentWord != "")
+                {
+                    words.push_back(currentWord);
+                    currentWord = "";
+                }
+            }
+            else
+            {
+                currentWord += s[i];
             }
         }
-        else
+
+        if (currentWord != "")
         {
-            currentWord += s[i];
+            words.push_back(currentWord);
         }
-    }
 
-    if (currentWord != "")
-    {
-        words.push_back(currentWord);
+        return words;
     }
-
-    return words;
 }

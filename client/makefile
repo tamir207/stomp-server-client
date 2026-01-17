@@ -6,8 +6,8 @@ all: EchoClient bin/StompWCIClient
 EchoClient: bin/ConnectionHandler.o bin/echoClient.o
 	g++ -o bin/EchoClient bin/ConnectionHandler.o bin/echoClient.o $(LDFLAGS)
 
-bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/CommandEncoder.o
-	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/CommandEncoder.o $(LDFLAGS)
+bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/CommandEncoder.o bin/Utils.o bin/Frame.o
+	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/CommandEncoder.o bin/Utils.o bin/Frame.o $(LDFLAGS)
 
 bin/CommandEncoder.o: src/CommandEncoder.cpp
 	g++ $(CFLAGS) -o bin/CommandEncoder.o src/CommandEncoder.cpp
@@ -26,6 +26,12 @@ bin/StompClient.o: src/StompClient.cpp
 
 bin/StompProtocol.o: src/StompProtocol.cpp
 	g++ $(CFLAGS) -o bin/StompProtocol.o src/StompProtocol.cpp
+
+bin/Utils.o: src/Utils.cpp
+	g++ $(CFLAGS) -o bin/Utils.o src/Utils.cpp
+
+bin/Frame.o: src/Frame.cpp
+	g++ $(CFLAGS) -o bin/Frame.o src/Frame.cpp
 
 .PHONY: clean
 clean:

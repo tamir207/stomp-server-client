@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include "../include/ConnectionHandler.h"
 #include "../include/StompProtocol.h"
+#include "../include/Frame.h"
 #include <string>
 
 int main(int argc, char *argv[])
 {
+
     // if (argc < 3)
     // {
     //     std::cerr << "Usage: " << argv[0] << " host port" << std::endl

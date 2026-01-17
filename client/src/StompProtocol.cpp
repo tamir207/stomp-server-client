@@ -1,4 +1,5 @@
 #include "../include/StompProtocol.h"
+#include "../include/Frame.h"
 
 StompProtocol::StompProtocol() : 
     connection_handler(nullptr),
@@ -8,7 +9,10 @@ StompProtocol::StompProtocol() :
 }
 
 void StompProtocol::process(std::string msg) {
-    
+    Frame frame = Frame(msg);
+    if (frame.getType() == "CONNECTED") {
+
+    }
 }
 
 void StompProtocol::send(std::string command){
