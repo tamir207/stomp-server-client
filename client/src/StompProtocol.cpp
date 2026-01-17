@@ -1,5 +1,18 @@
 #include "../include/StompProtocol.h"
 
-StompProtocol::StompProtocol(ConnectionHandler& ch) : connectionHandler(ch)  {
-
+StompProtocol::StompProtocol() : 
+    connection_handler(nullptr),
+    encoder(),
+    socket_listener(nullptr) 
+{
 }
+
+void StompProtocol::process(std::string msg) {
+}
+
+void StompProtocol::send(std::string command){
+    encoder.encode(command);
+}
+
+// 	connectionHandler()
+//  socket_listener(connectionHandler, [this](std::string msg) { this->process(msg); })

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "../include/ConnectionHandler.h"
 #include "../include/StompProtocol.h"
+#include <string>
 
 int main(int argc, char *argv[])
 {
@@ -13,9 +14,8 @@ int main(int argc, char *argv[])
     std::string host = argv[1];
     short port = atoi(argv[2]);
 
-    ConnectionHandler connectionHandler(host, port);
-    StompProtocol protocol(connectionHandler);
-    protocol.start();
+    StompProtocol protocol;
+
     // if (!connectionHandler.connect())
     // {
     //     std::cerr << "Cannot connect to " << host << ":" << port << std::endl;
@@ -24,39 +24,11 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        const short bufsize = 1024;
-        char buf[bufsize];
-        std::cin.getline(buf, bufsize);
-
-        std::string line = "CONNECT\nreceipt: 12\n";
-        line += '\0';
-        int len = line.length();
-        if (!connectionHandler.sendLine(line))
-        {
-            std::cout << "Disconnected. Exiting...\n"
-                      << std::endl;
-            break;
-        }
-        std::cout << "Sent " << len + 1 << " bytes to server" << std::endl;
-
-        std::string answer;
-        if (!connectionHandler.getLine(answer))
-        {
-            std::cout << "Disconnected. Exiting...\n"
-                      << std::endl;
-            break;
-        }
-
-        len = answer.length();
-        answer.resize(len - 1);
-        std::cout << "Reply: " << answer << " " << len << " bytes " << std::endl
-                  << std::endl;
-        if (answer == "bye")
-        {
-            std::cout << "Exiting...\n"
-                      << std::endl;
-            break;
-        }
+        std::string input;
+        std::cout << "Enter command -> " << std::flush;
+        std::getline(std::cin, input);
+        protocol.send(input);
+        std::cout << "The input is: " << input << std::endl;
     }
     return 0;
 
