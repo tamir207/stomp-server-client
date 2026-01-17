@@ -20,8 +20,8 @@ public:
 StompProtocol();
 ~StompProtocol();
 
-// Should create runnable task for the thread to execute.
-void handleServerInput(std::string msg);
+// Should process server response and return true iff it should stop reading
+bool handleServerInput(std::string msg);
 
 void handleUserInput(std::string command);
 };

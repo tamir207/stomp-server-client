@@ -2,11 +2,12 @@
 #include "../include/Frame.h"
 #include "../include/Utils.h"
 
-StompProtocol::StompProtocol() : connectionHandler(nullptr),
-                                 socketListener(nullptr),
-                                 subIDCounter(1),
-                                 channelToId(),
-                                 idToChannel()
+StompProtocol::StompProtocol()
+    : connectionHandler(nullptr),
+      socketListener(nullptr),
+      subIDCounter(1),
+      channelToId(),
+      idToChannel()
 {
 }
 
@@ -16,15 +17,25 @@ StompProtocol::~StompProtocol()
     delete socketListener;
 }
 
-void StompProtocol::handleServerInput(std::string msg)
+bool StompProtocol::handleServerInput(std::string msg)
 {
     Frame frame = Frame(msg);
-    std::cout << frame.toString() << std::endl;
-
+    std::cout << "------------STOMP-RECEIVED------------" << std::endl;
+    std::cout << msg << std::endl;
+    std::cout << "------------STOMP-RECEIVED------------" << std::endl;
     if (frame.getType() == "CONNECTED")
     {
-        std::cout << frame.toString() << std::endl;
+        std::cout << "Stopping client " << std::endl;
+        return true;
     }
+    else if (frame.getType() == "RECEIPT")
+    {
+    }
+
+    return false;
+
+    // socketListener->stop();
+    // connectionHandler->close();
 }
 
 void StompProtocol::handleUserInput(std::string command)
@@ -44,20 +55,22 @@ void StompProtocol::handleUserInput(std::string command)
                 std::string port = words[1].substr(colonPos + 1);
                 std::string username = words[2];
                 std::string passcode = words[3];
-                
-                std::cout << "-------1111111111111111-------\n\n" << std::endl;
                 short shortPort = static_cast<short>(std::stoi(port));
-                std::cout << "-------222222222222222-------\n\n" << std::endl;
-
                 connectionHandler = new ConnectionHandler(host, shortPort);
                 if (!connectionHandler->connect())
                 {
-                    std::cout << "--------------\n\n" << std::endl;
+                    std::cout << "-------ERORRRRRRRRRRRRRRRRRRRRRRRRRRR-------\n\n"
+                              << std::endl;
                 }
+                else
+                {
+                    std::cout << "-------successfull contecting-------\n\n";
+                }
+
                 socketListener = new SocketListener(*connectionHandler,
                                                     [this](std::string msg)
                                                     {
-                                                        this->handleServerInput(msg);
+                                                        return this->handleServerInput(msg);
                                                     });
 
                 frame.setType("CONNECT");
@@ -65,14 +78,25 @@ void StompProtocol::handleUserInput(std::string command)
                 frame.addHeader("host", host);
                 frame.addHeader("login", username);
                 frame.addHeader("passcode", passcode);
+                frame.addHeader("receipt", "123");
+
+                if (!connectionHandler->sendFrameAscii(frame.toString(), '\0'))
+                {
+                    std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
+                    return;
+                }
             }
         }
     }
     else if (len >= 2)
     {
     }
-
-    std::cout << "STOMP--------------\n\n" << frame.toString() << std::endl;
+    if (command != "")
+    {
+        std::cout << "--------------STOMP-SEND--------------" << std::endl;
+        std::cout << frame.toString() << std::endl;
+        std::cout << "--------------STOMP-SEND--------------" << std::endl;
+    }
 }
 
 // 	connectionHandler()

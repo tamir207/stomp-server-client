@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         std::cout << "Enter command -> " << std::flush;
         std::getline(std::cin, input);
         protocol.handleUserInput(input);
-        std::cout << "The input is: " << input << std::endl;
+        //std::cout << "The input is: " << input << std::endl;
     }
     return 0;
 
