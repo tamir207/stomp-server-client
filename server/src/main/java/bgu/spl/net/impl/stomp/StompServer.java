@@ -16,13 +16,13 @@ public class StompServer {
         // ConnectionsImpl<String> connections = new ConnectionsImpl<>();
         // String stompMessage =
         // "MESSAGE\nsubscription:78\nmessage-id:20\ndestination:/topic/a\n\nHello Topic
-        // a\n^@";
+        // a\n\0";
         // stomp.process(stompMessage);
 
         Server.threadPerClient(
                 7777, // port
                 () -> new StompMessagingProtocolImpl(), // protocol factory
-                LineMessageEncoderDecoder::new // message encoder decoder factory
+                () -> new LineMessageEncoderDecoder()
         ).serve();
 
         // Server.reactor(

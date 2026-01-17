@@ -96,6 +96,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (connectedHandlers.containsKey(connectionId))
             return false;
         connectedHandlers.put(connectionId, handler);
+        System.out.println("ADDED NEW CLIENT: " + connectionId);
         return true;
     }
 
@@ -134,7 +135,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
         }
 
         connectedHandlers.remove(connectionId);
-        usernameToID.remove(username);
+
+        if (username != null) {
+            usernameToID.remove(username);
+        }
+        
         IDToUsername.remove(connectionId);
 
         Map<String, String> userSubs = subscriptions.get(connectionId);

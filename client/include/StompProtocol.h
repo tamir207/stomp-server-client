@@ -13,8 +13,10 @@ private:
 ConnectionHandler* connectionHandler;
 SocketListener* socketListener;
 int subIDCounter;
+int receiptCounter;
 std::map<std::string, int> channelToId;
 std::map<int, std::string> idToChannel;
+bool connected;
 public:
 
 StompProtocol();

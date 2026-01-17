@@ -14,6 +14,6 @@ private:
 
 public:
 	SocketListener(ConnectionHandler &handler, std::function<bool(std::string)> handleInput);
-	~SocketListener();
+	~SocketListener(); // Should I be virtual?
 	// Run the reader thread only after you called ConnectionHandler.connect()
 };
