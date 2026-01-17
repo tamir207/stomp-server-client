@@ -57,7 +57,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             String clientVersion = headers.get("accept-version");
             if (!VERSION.equals(clientVersion)) {
                 connections.send(connectionId,
-                        generateErrorMessage(receipt, "unsupported version", message,
+                        generateErrorMessage(receipt, "Could not connect to server", message,
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
                 connections.disconnect(connectionId);
             } else {
@@ -68,13 +68,13 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
                 if (status == -1) {
                     connections.send(connectionId,
-                            generateErrorMessage(receipt, "wrong password", message,
+                            generateErrorMessage(receipt, "Wrong password", message,
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
                 } else if (status == 0) {
                     connections.send(connectionId,
-                            generateErrorMessage(receipt, "user already active", message,
-                                    "user with the same username already logged in"));
+                            generateErrorMessage(receipt, "User already logged in", message,
+                                    "User with the same username already logged in"));
                     connections.disconnect(this.connectionId);
                 } else {
                     connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
@@ -152,7 +152,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             connections.send(des, body);
         } else if ("DISCONNECT".equals(type)) {
             connections.disconnect(connectionId);
-            // shouldTerminate = true; Add later
+            shouldTerminate = true; // Close socket
         }
         // DELETE
         System.out.println("Type: " + type + "\nHeaders" + headers.toString() + "\nBody: " + body);
