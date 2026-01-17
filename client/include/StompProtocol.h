@@ -2,7 +2,7 @@
 
 #include "../include/ConnectionHandler.h"
 #include "../include/SocketListener.h"
-#include "../include/CommandEncoder.h"
+#include "../include/Frame.h"
 #include <string>
 #include <iostream>
 
@@ -10,16 +10,18 @@
 class StompProtocol
 {
 private:
-ConnectionHandler* connection_handler;
-CommandEncoder encoder;
-SocketListener* socket_listener;
+ConnectionHandler* connectionHandler;
+SocketListener* socketListener;
+int subIDCounter;
+std::map<std::string, int> channelToId;
+std::map<int, std::string> idToChannel;
 public:
 
 StompProtocol();
+~StompProtocol();
 
 // Should create runnable task for the thread to execute.
-void process(std::string msg);
+void handleServerInput(std::string msg);
 
-
-void send(std::string command);
+void handleUserInput(std::string command);
 };

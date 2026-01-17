@@ -7,16 +7,15 @@
 class SocketListener
 {
 private:
-	std::thread read_thread;
+	std::thread readThread;
 	ConnectionHandler &handler;
-	std::function<void(std::string)> process_func;
-	bool should_terminate;
+	std::function<void(std::string)> handleServerInput;
+	bool shouldTerminate;
 
-public:	
-	SocketListener(ConnectionHandler &ch, std::function<void(std::string)> process);
-
+public:
+	SocketListener(ConnectionHandler &handler, std::function<void(std::string)> handleInput);
+	~SocketListener();
 	// Run the reader thread only after you called ConnectionHandler.connect()
-	void run();
 
 	// Should set shouldTerminate to true and stop the thread. Should be called before closing the socket in ConnectionHandler
 	void stop();

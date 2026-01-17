@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
         }
-		// connectionHandler.sendLine(line) appends '\n' to the message. Therefor we send len+1 bytes.
+		// connectionHandler.sendLine(line) appends '\n' to the message. Therefor we handleUserInput len+1 bytes.
         std::cout << "Sent " << len+1 << " bytes to server" << std::endl;
 
  

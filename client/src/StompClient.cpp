@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         std::string input;
         std::cout << "Enter command -> " << std::flush;
         std::getline(std::cin, input);
-        protocol.send(input);
+        protocol.handleUserInput(input);
         std::cout << "The input is: " << input << std::endl;
     }
     return 0;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
     // if (!connectionHandler.sendFrameAscii(connectFrame, '\0'))
     // {
-    //     std::cout << "Disconnected. Failed to send frame." << std::endl;
+    //     std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
     //     return 1;
     // }
 

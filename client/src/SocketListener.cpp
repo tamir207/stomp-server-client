@@ -1,26 +1,31 @@
 #include "../include/SocketListener.h"
 #include "../include/ConnectionHandler.h"
 
-SocketListener::SocketListener(ConnectionHandler &ch, std::function<void(std::string)> process) : handler(ch), process_func(process) : should_terminate(false) {}
-
-SocketListener::run()
+SocketListener::SocketListener(ConnectionHandler &ch, std::function<void(std::string)> handleInput) : handler(ch), handleServerInput(handleInput), shouldTerminate(false)
 {
-	read_thread([this]() {
-		while (!should_terminate)
+	readThread = std::thread([this]() {
+		while (!shouldTerminate)
 		{
-			std::string &frame;
-			if (!handler.getFrameAscii(frame, '\0');)
+			std::string frame;
+			if (!handler.getFrameAscii(frame, '\0'))
 			{
-				std::cout << "[ERROR] Disconnected. Exiting...\n"
-						  << std::endl;
+				std::cout << "[ERROR] Disconnected. Exiting...\n" << std::endl;
 				break;
 			}
-			process_func(frame);
-		}
+
+			handleServerInput(frame);
+		} 
 	});
 }
 
-SocketListener::stop()
+void SocketListener::stop()
 {
-	should_terminate = true;
+	shouldTerminate = true;
+}
+
+SocketListener::~SocketListener() {
+    stop(); 
+    if (readThread.joinable()) {
+        readThread.join();
+    }
 }

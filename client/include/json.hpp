@@ -6149,7 +6149,7 @@ class file_input_adapter
 Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
 beginning of input. Does not support changing the underlying std::streambuf
 in mid-input. Maintains underlying std::istream and std::streambuf to support
-subsequent use of standard std::istream operations to process any input
+subsequent use of standard std::istream operations to handleServerInput any input
 characters following those used in parsing the JSON input.  Clears the
 std::istream flags; any input errors (e.g., EOF) will be detected by the first
 subsequent call for input from the std::istream.
@@ -8797,7 +8797,7 @@ scan_number_done:
         }
 
         // the first character is not the beginning of the BOM; unget it to
-        // process is later
+        // handleServerInput is later
         unget();
         return true;
     }
@@ -12135,11 +12135,11 @@ namespace detail
 
 enum class parse_event_t : std::uint8_t
 {
-    /// the parser read `{` and started to process a JSON object
+    /// the parser read `{` and started to handleServerInput a JSON object
     object_start,
     /// the parser read `}` and finished processing a JSON object
     object_end,
-    /// the parser read `[` and started to process a JSON array
+    /// the parser read `[` and started to handleServerInput a JSON array
     array_start,
     /// the parser read `]` and finished processing a JSON array
     array_end,
@@ -14363,7 +14363,7 @@ class json_pointer
                 default:
                 {
                     // we do not expect primitive values if there is still a
-                    // reference token to process
+                    // reference token to handleServerInput
                     return false;
                 }
             }
