@@ -41,6 +41,11 @@ void StompProtocol::handleUserInput(std::string command) {
     std::vector<std::string> words = Utils::split(command, ' ');
     size_t len = words.size();
 
+    if (command.size() == 0) {
+        return;
+    }
+
+    bool isValidCommand = false;
     if (len >= 4) {
         if (words[0] == "login") {
             if (connected) {
@@ -59,7 +64,6 @@ void StompProtocol::handleUserInput(std::string command) {
                     std::cout << "Could not connect to server\n" << std::endl;
                 }
 
-                connected = true;
                 socketListener = new SocketListener(*connectionHandler, [this](std::string msg) {
                     return this->handleServerInput(msg);
                 });
@@ -70,6 +74,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("login", username);
                 frame.addHeader("passcode", passcode);
                 frame.addHeader("receipt", "123");
+                isValidCommand = true;
             }
         }
     } else if (len >= 2) {
@@ -86,6 +91,8 @@ void StompProtocol::handleUserInput(std::string command) {
 
                 subIDCounter++;
                 receiptCounter++;
+                isValidCommand = true;
+
             } else {
                 std::cout << "you are already subscribed to " << channel << std::endl;
             }
@@ -102,30 +109,30 @@ void StompProtocol::handleUserInput(std::string command) {
                 idToChannel.erase(id);
 
                 receiptCounter++;
+                isValidCommand = true;
+
             } else {
                 std::cout << "you are NOT subscribed to " << channel << std::endl;
             }
-        }
-        else if (words[0] == "report") {
+        } else if (words[0] == "report") {
             names_and_events parsed = parseEventsFile(words[1]);
+            isValidCommand = true;
         }
     } else if (len >= 1) {
         if (words[0] == "logout") {
             frame.setType("DISCONNECT");
             frame.addHeader("receipt", std::to_string(receiptCounter));
             receiptCounter++;
+            isValidCommand = true;
         }
     }
 
-    if (!connectionHandler->sendFrameAscii(frame.toString(), '\0')) {
+    if (isValidCommand && !connectionHandler->sendFrameAscii(frame.toString(), '\0')) {
         std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
-        return;
-    }
-
-    if (command != "") {
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
         std::cout << frame.toString() << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
+        return;
     }
 }
 

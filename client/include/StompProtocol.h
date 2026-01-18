@@ -3,6 +3,7 @@
 #include "../include/ConnectionHandler.h"
 #include "../include/SocketListener.h"
 #include "../include/Frame.h"
+#include "../include/event.h"
 #include <string>
 #include <iostream>
 
@@ -17,6 +18,7 @@ int receiptCounter;
 std::map<std::string, int> channelToId;
 std::map<int, std::string> idToChannel;
 bool connected;
+std::map<std::string, std::map<std::string, std::vector<Event>>> gameUpdates;//<game, <event-user, events>>
 public:
 
 StompProtocol();
