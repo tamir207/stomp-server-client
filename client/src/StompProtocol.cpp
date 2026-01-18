@@ -1,21 +1,19 @@
 #include "../include/StompProtocol.h"
 #include "../include/Frame.h"
+#include "../include/NetworkClient.h"
 #include "../include/Utils.h"
 #include "../include/event.h"
 
 StompProtocol::StompProtocol()
-    : connectionHandler(nullptr),
-      socketListener(nullptr),
-      subIDCounter(1),
+    : subIDCounter(1),
       receiptCounter(1),
       channelToId(),
       idToChannel(),
-      connected(false) { }
+      connected(false),
+      receiptToStomp(),
+      networkClient() { }
 
-StompProtocol::~StompProtocol() {
-    delete connectionHandler;
-    delete socketListener;
-}
+StompProtocol::~StompProtocol() { networkClient.disconnect(); }
 
 bool StompProtocol::handleServerInput(std::string msg) {
     Frame frame = Frame(msg);
@@ -28,12 +26,16 @@ bool StompProtocol::handleServerInput(std::string msg) {
     } else if (frame.getType() == "CONNECTED") {
         std::cout << "Login successful" << std::endl;
         connected = true;
+    } else if (frame.getType() == "RECEIPT") {
+        std::cout << "Receipt Stomp Command: " << receiptToStomp[frame.getHeaderValue("receipt-id")] << std::endl;
+        if (receiptToStomp[frame.getHeaderValue("receipt-id")] == "DISCONNECT") {
+            std::cout << "Disconnected" << std::endl;
+            connected = false;
+            return true;
+        }
     }
 
     return false;
-
-    // socketListener->stop();
-    // connectionHandler->close();
 }
 
 void StompProtocol::handleUserInput(std::string command) {
@@ -59,12 +61,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 std::string username = words[2];
                 std::string passcode = words[3];
                 short shortPort = static_cast<short>(std::stoi(port));
-                connectionHandler = new ConnectionHandler(host, shortPort);
-                if (!connectionHandler->connect()) {
-                    std::cout << "Could not connect to server\n" << std::endl;
-                }
-
-                socketListener = new SocketListener(*connectionHandler, [this](std::string msg) {
+                networkClient.connect(host, shortPort, [this](std::string msg) {
                     return this->handleServerInput(msg);
                 });
 
@@ -74,7 +71,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("login", username);
                 frame.addHeader("passcode", passcode);
                 frame.addHeader("receipt", "123");
-                isValidCommand = true;
+                receiptToStomp["123"] = isValidCommand = true;
             }
         }
     } else if (len >= 2) {
@@ -104,13 +101,10 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.setType("UNSUBSCRIBE");
                 frame.addHeader("id", std::to_string(id));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
-
                 channelToId.erase(channel);
                 idToChannel.erase(id);
-
                 receiptCounter++;
                 isValidCommand = true;
-
             } else {
                 std::cout << "you are NOT subscribed to " << channel << std::endl;
             }
@@ -120,19 +114,27 @@ void StompProtocol::handleUserInput(std::string command) {
         }
     } else if (len >= 1) {
         if (words[0] == "logout") {
-            frame.setType("DISCONNECT");
-            frame.addHeader("receipt", std::to_string(receiptCounter));
-            receiptCounter++;
-            isValidCommand = true;
+            if (!connected) {
+                std::cout << "Already logged out" << std::endl;
+            } else {
+                frame.setType("DISCONNECT");
+                frame.addHeader("receipt", std::to_string(receiptCounter));
+                receiptToStomp[std::to_string(receiptCounter)] = "DISCONNECT";
+                receiptCounter++;
+                isValidCommand = true;
+                connected = false;
+            }
         }
     }
 
-    if (isValidCommand && !connectionHandler->sendFrameAscii(frame.toString(), '\0')) {
+    if (isValidCommand && !networkClient.sendFrame(frame.toString())) {
         std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
         std::cout << frame.toString() << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
         return;
+    } else if (!isValidCommand) {
+        std::cout << "Please enter a valid command" << std::endl;
     }
 }
 

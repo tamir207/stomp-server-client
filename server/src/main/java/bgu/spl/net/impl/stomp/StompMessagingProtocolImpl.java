@@ -22,7 +22,8 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
 
     @Override
     public void process(String message) {
-        if (message.isEmpty()) return;
+        if (message.isEmpty())
+            return;
         String type = "";
         HashMap<String, String> headers = new HashMap<>();
         String body = "";
@@ -49,12 +50,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             return;
         }
 
-        // String receipt = headers.get("receipt");
-        // if (receipt != null) {
-        // connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n" +
-        // '\0');
-        // }
-
         if ("CONNECT".equals(type)) {
             String clientVersion = headers.get("accept-version");
             if (!VERSION.equals(clientVersion)) {
@@ -62,6 +57,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                         generateErrorMessage(headers.get("receipt"), "Could not connect to server", message,
                                 "Client tried to connect with unsupported version. Supported version: " + VERSION));
                 connections.disconnect(connectionId);
+                shouldTerminate = true;
             } else {
                 System.out.println("ffffffffffffffffffffffff");
                 System.out.println(headers.get("passcode"));
@@ -73,6 +69,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                             generateErrorMessage(headers.get("receipt"), "Wrong password", message,
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
+                    shouldTerminate = true;
                 } else if (status == 0) {
                     System.out.println("==================== User akready loggin in!!!!!!!!");
                     connections.send(connectionId,
@@ -80,9 +77,11 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                     "User with the same username already logged in"));
                     System.out.println("::::::::::::::: BAD CONNECTION ID: :::::::::::::: " + connectionId);
                     connections.disconnect(this.connectionId);
+                    shouldTerminate = true;
                 } else {
                     System.out.println("::::::::::::::: GOOD CONNECTION ID: :::::::::::::: " + connectionId);
                     connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
+                    sendReceipt(headers.get("receipt"));
                 }
             }
         } else if ("SUBSCRIBE".equals(type)) {
@@ -94,7 +93,10 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                             generateErrorMessage(headers.get("receipt"), "subscription failed", message,
                                     "failed to subscribe " + this.connectionId + " to " + des));
                     connections.disconnect(this.connectionId);
+                    shouldTerminate = true;
                 }
+
+                sendReceipt(headers.get("receipt"));
             }
         } else if ("UNSUBSCRIBE".equals(type)) {
             String idString = headers.get("id");
@@ -106,6 +108,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                 "unsubscribe failed", message,
                                 "failed to unsubscribe because 'id' header is missing "));
                 connections.disconnect(connectionId);
+                shouldTerminate = true;
                 return;
             }
 
@@ -118,8 +121,11 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                 "unsubscribe failed", message,
                                 "failed to unsubscribe the subscription specified doesn't exists "));
                 connections.disconnect(connectionId);
+                shouldTerminate = true;
                 return;
             }
+
+            sendReceipt(headers.get("receipt"));
         } else if ("SEND".equals(type)) {
             String des = headers.get("destination");
             if (des == null) {
@@ -130,6 +136,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                 "send failed", message,
                                 "failed to send message because destination not specified. "));
                 connections.disconnect(connectionId);
+                shouldTerminate = true;
                 return;
             } else {
                 Map<Integer, String> subscribers = connections.getSubscribers(des);
@@ -140,6 +147,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                             message,
                             "Can't send message to unsubcribed topic. Please subscribe first."));
                     connections.disconnect(connectionId);
+                    shouldTerminate = true;
                     return;
                 } else if (subscribers != null) {
                     for (Map.Entry<Integer, String> subcriber : subscribers.entrySet()) {
@@ -151,13 +159,15 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                             connections.send(subcriber.getKey(), msg);
                         }
                     }
+
+                    sendReceipt(headers.get("receipt"));
                 }
             }
 
             connections.send(des, body);
         } else if ("DISCONNECT".equals(type)) {
+            sendReceipt(headers.get("receipt"));
             connections.disconnect(connectionId);
-            shouldTerminate = true; // Close socket
         }
         // DELETE
         System.out.println("Type: " + type + "\nHeaders" + headers.toString() + "\nBody: " + body);
@@ -166,6 +176,12 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
     @Override
     public boolean shouldTerminate() {
         return shouldTerminate;
+    }
+
+    private void sendReceipt(String receipt) {
+        if (receipt != null) {
+            connections.send(connectionId, "RECEIPT\nreceipt-id:" + receipt + "\n\n" + '\0');
+        }
     }
 
     private String generateErrorMessage(String receiptID, String message, String body, String description) {

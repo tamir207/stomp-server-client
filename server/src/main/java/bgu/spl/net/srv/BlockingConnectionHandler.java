@@ -38,7 +38,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
                     protocol.process(nextMessage);
                 }
             }
-
+            
         } catch (IOException ex) {
             System.out.println("Massesage failed in thread: " + ex.getMessage());
             ex.printStackTrace();

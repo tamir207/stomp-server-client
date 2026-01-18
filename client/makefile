@@ -6,8 +6,8 @@ all: EchoClient bin/StompWCIClient
 EchoClient: bin/ConnectionHandler.o bin/echoClient.o
 	g++ -o bin/EchoClient bin/ConnectionHandler.o bin/echoClient.o $(LDFLAGS)
 
-bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/SocketListener.o
-	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/SocketListener.o -lboost_system -lpthread
+bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o
+	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o -lboost_system -lpthread
 
 bin/ConnectionHandler.o: src/ConnectionHandler.cpp
 	g++ $(CFLAGS) -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
@@ -24,8 +24,8 @@ bin/StompClient.o: src/StompClient.cpp
 bin/StompProtocol.o: src/StompProtocol.cpp
 	g++ $(CFLAGS) -o bin/StompProtocol.o src/StompProtocol.cpp
 
-bin/SocketListener.o: src/SocketListener.cpp
-	g++ $(CFLAGS) -o bin/SocketListener.o src/SocketListener.cpp	
+bin/NetworkClient.o: src/NetworkClient.cpp
+	g++ $(CFLAGS) -o bin/NetworkClient.o src/NetworkClient.cpp	
 
 bin/Utils.o: src/Utils.cpp
 	g++ $(CFLAGS) -o bin/Utils.o src/Utils.cpp

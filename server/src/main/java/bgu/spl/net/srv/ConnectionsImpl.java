@@ -126,25 +126,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
     @Override
     public void disconnect(int connectionId) {
         String username = IDToUsername.get(connectionId);
-
-        ConnectionHandler<T> handler = connectedHandlers.get(connectionId);
-        try {
-            handler.close();
-        } catch (Exception e) {
-            System.err.println("Failed to close connection");
-        }
-
         connectedHandlers.remove(connectionId);
-
         if (username != null) {
             usernameToID.remove(username);
         }
         
         IDToUsername.remove(connectionId);
-
         Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
-
         if (userSubs != null) {
             for (Map.Entry<String, String> registeredChannels : userSubs.entrySet()) {
                 String channelName = registeredChannels.getValue();
