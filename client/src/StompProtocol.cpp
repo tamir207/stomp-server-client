@@ -32,7 +32,8 @@ bool StompProtocol::handleServerInput(std::string msg) {
         connected = true;
     } else if (frame.getType() == "RECEIPT") {
         std::cout << "Receipt Stomp Command: " << receiptToStomp[frame.getHeaderValue("receipt-id")] << std::endl;
-        if (receiptToStomp[frame.getHeaderValue("receipt-id")] == "DISCONNECT") {
+        std::string receiptType = receiptToStomp[frame.getHeaderValue("receipt-id")];
+        if (receiptType == "DISCONNECT") {
             std::cout << "Disconnected" << std::endl;
             channelToId.clear();
             idToChannel.clear();
@@ -86,8 +87,13 @@ void StompProtocol::handleUserInput(std::string command) {
         }
     } else if (len >= 2) {
         if (words[0] == "join") {
+            if (!connected) {
+                std::cout << "Please login first" << std::endl;
+                return;
+            }
+
             std::string channel = words[1];
-            if (channelToId.find(channel) == channelToId.end()) {
+            if (channelToId.find(channel) == channelToId.end() && connected) {
                 frame.setType("SUBSCRIBE");
                 frame.addHeader("destination", channel);
                 frame.addHeader("id", std::to_string(subIDCounter));
@@ -99,9 +105,14 @@ void StompProtocol::handleUserInput(std::string command) {
                 receiptCounter++;
                 isValidCommand = true;
             } else {
-                std::cout << "you are already subscribed to " << channel << std::endl;
+                std::cout << "You are already subscribed to " << channel << std::endl;
             }
         } else if (words[0] == "exit") {
+            if (!connected) {
+                std::cout << "Please login first" << std::endl;
+                return;
+            }
+
             std::string channel = words[1];
             auto ind = channelToId.find(channel);
             if (ind != channelToId.end()) {
@@ -115,12 +126,22 @@ void StompProtocol::handleUserInput(std::string command) {
                 receiptCounter++;
                 isValidCommand = true;
             } else {
-                std::cout << "you are NOT subscribed to " << channel << std::endl;
+                std::cout << "Can't exit because you are not subscribed to " << channel << std::endl;
             }
         } else if (words[0] == "report") {
+            if (!connected) {
+                std::cout << "Please login first" << std::endl;
+                return;
+            }
+
             try {
                 names_and_events parsed = parseEventsFile(words[1]);
                 std::string gameName = parsed.team_a_name + "_" + parsed.team_b_name;
+                if (channelToId.find(gameName) == channelToId.end()) {
+                    std::cout << "You have not joined " << gameName << " yet. Can't send report." << std::endl;
+                    return;
+                }
+
                 isValidCommand = true;
 
                 for (const auto& event : parsed.events) {
@@ -163,8 +184,8 @@ void StompProtocol::handleUserInput(std::string command) {
                         return;
                     }
                 }
-                this->report = true;
 
+                this->report = true;
             } catch (const nlohmann::json::parse_error& e) {
                 std::cout << e.what() << std::endl;
             } catch (const std::exception& e) {
@@ -175,18 +196,20 @@ void StompProtocol::handleUserInput(std::string command) {
         if (words[0] == "logout") {
             if (!connected) {
                 std::cout << "Already logged out" << std::endl;
-            } else {
-                frame.setType("DISCONNECT");
-                frame.addHeader("receipt", std::to_string(receiptCounter));
-                receiptToStomp[std::to_string(receiptCounter)] = "DISCONNECT";
-                receiptCounter++;
-                isValidCommand = true;
+                return;
             }
+
+            frame.setType("DISCONNECT");
+            frame.addHeader("receipt", std::to_string(receiptCounter));
+            receiptToStomp[std::to_string(receiptCounter)] = "DISCONNECT";
+            receiptCounter++;
+            isValidCommand = true;
         }
     }
 
     if (isValidCommand && !report && !networkClient.sendFrame(frame.toString())) {
-        std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
+        std::cout << "Failed to send frame to server. Unexpected Issue" << std::endl;
+        // std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
         std::cout << frame.toString() << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
@@ -194,7 +217,6 @@ void StompProtocol::handleUserInput(std::string command) {
     } else if (!isValidCommand) {
         std::cout << "Please enter a valid command" << std::endl;
     }
-}
 
-// 	connectionHandler()
-//  socketListener(connectionHandler, [this](std::string msg) { this->handleServerInput(msg); })
+    this->report = false;
+}
