@@ -34,6 +34,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
 
         String[] lines = message.split("\n");
 
+        System.out.println("=======================");
+        System.out.println("lines---:" + lines);
+        System.out.println("=======================");
         type = lines[0];
         int i = 1;
         for (; i < lines.length && !lines[i].isEmpty(); i++) {
@@ -140,7 +143,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 return;
             } else {
                 Map<Integer, String> subscribers = connections.getSubscribers(des);
-                if (subscribers.get(connectionId) == null) {
+                if (subscribers != null && subscribers.get(connectionId) == null) {
                     connections.send(connectionId, generateErrorMessage(
                             headers.get("receipt"),
                             "Unauthorized",

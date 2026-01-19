@@ -3,6 +3,7 @@
 #include "../include/NetworkClient.h"
 #include "../include/Utils.h"
 #include "../include/event.h"
+#include "../include/json.hpp"
 
 StompProtocol::StompProtocol()
     : subIDCounter(1),
@@ -11,7 +12,10 @@ StompProtocol::StompProtocol()
       idToChannel(),
       connected(false),
       receiptToStomp(),
-      networkClient() { }
+      networkClient(),
+      gameUpdates(),
+      report(false),
+      username() { }
 
 StompProtocol::~StompProtocol() { networkClient.disconnect(); }
 
@@ -72,6 +76,8 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("passcode", passcode);
                 frame.addHeader("receipt", "123");
                 receiptToStomp["123"] = isValidCommand = true;
+
+                this->username = username;
             }
         }
     } else if (len >= 2) {
@@ -109,8 +115,58 @@ void StompProtocol::handleUserInput(std::string command) {
                 std::cout << "you are NOT subscribed to " << channel << std::endl;
             }
         } else if (words[0] == "report") {
-            names_and_events parsed = parseEventsFile(words[1]);
-            isValidCommand = true;
+            try {
+                names_and_events parsed = parseEventsFile(words[1]);
+                std::string gameName = parsed.team_a_name + "_" + parsed.team_b_name;
+                isValidCommand = true;
+
+                for (const auto& event : parsed.events) {
+                    gameUpdates[gameName][username].push_back(event);
+
+                    std::string body = "user: " + username + "\n";
+                    body += "team a: " + event.get_team_a_name() + "\n";
+                    body += "team b: " + event.get_team_b_name() + "\n";
+                    body += "event name: " + event.get_name() + "\n";
+                    body += "time: " + std::to_string(event.get_time()) + "\n";
+                    body += "general game updates:\n";
+                    for (const auto& update : event.get_game_updates()) {
+                        body += "    " + update.first + ": " + update.second + "\n";
+                    }
+                    body += "team a updates:\n";
+                    for (const auto& update : event.get_team_a_updates()) {
+                        body += "    " + update.first + ": " + update.second + "\n";
+                    }
+                    body += "team b updates:\n";
+                    for (const auto& update : event.get_team_b_updates()) {
+                        body += "    " + update.first + ": " + update.second + "\n";
+                    }
+                    body += "description:\n" + event.get_description();
+
+                    auto& eventsList = gameUpdates[gameName][username];
+                    std::sort(eventsList.begin(), eventsList.end(), [](const Event& a, const Event& b) {
+                        return a.get_time() < b.get_time();
+                    });
+
+                    frame.setType("SEND");
+                    frame.addHeader("destination", gameName);
+                    frame.setBody(body);
+
+                    std::cout << "--------------STOMP-SEND--------------" << std::endl;
+                    std::cout << frame.toString() << std::endl;
+                    std::cout << "--------------STOMP-SEND--------------" << std::endl;
+
+                    if (!networkClient.sendFrame(frame.toString())) {
+                        std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
+                        return;
+                    }
+                }
+                this->report = true;
+
+            } catch (const nlohmann::json::parse_error& e) {
+                std::cout << e.what() << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << e.what() << std::endl;
+            }
         }
     } else if (len >= 1) {
         if (words[0] == "logout") {
@@ -127,7 +183,7 @@ void StompProtocol::handleUserInput(std::string command) {
         }
     }
 
-    if (isValidCommand && !networkClient.sendFrame(frame.toString())) {
+    if (isValidCommand && !report && !networkClient.sendFrame(frame.toString())) {
         std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
         std::cout << "--------------STOMP-SEND--------------" << std::endl;
         std::cout << frame.toString() << std::endl;

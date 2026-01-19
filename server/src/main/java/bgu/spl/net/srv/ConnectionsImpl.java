@@ -70,9 +70,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
             foundTopic.put(connectionId, subscriptionId);
 
             Map<String, String> userSubs = subscriptions.get(connectionId);
+
             if (userSubs == null) {
-                subscriptions.put(connectionId, new ConcurrentHashMap<>());
-                userSubs = subscriptions.get(subscriptionId);
+                userSubs = new ConcurrentHashMap<>();
+                subscriptions.put(connectionId, userSubs);
+                userSubs = subscriptions.get(connectionId);
             }
             userSubs.put(subscriptionId, topic);
         }
@@ -130,7 +132,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (username != null) {
             usernameToID.remove(username);
         }
-        
+
         IDToUsername.remove(connectionId);
         Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
