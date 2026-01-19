@@ -166,8 +166,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                     sendReceipt(headers.get("receipt"));
                 }
             }
-
-            connections.send(des, body);
         } else if ("DISCONNECT".equals(type)) {
             sendReceipt(headers.get("receipt"));
             connections.disconnect(connectionId);

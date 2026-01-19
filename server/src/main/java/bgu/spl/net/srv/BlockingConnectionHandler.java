@@ -38,10 +38,14 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
                     protocol.process(nextMessage);
                 }
             }
-            
+
         } catch (IOException ex) {
-            System.out.println("Massesage failed in thread: " + ex.getMessage());
-            ex.printStackTrace();
+            if (ex.getMessage() != null && ex.getMessage().contains("Connection reset")) {
+                System.out.println("Client closed socket (Connection reset).");
+            } else {
+                System.out.println("Message failed in thread: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         }
 
     }

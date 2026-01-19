@@ -34,6 +34,9 @@ bool StompProtocol::handleServerInput(std::string msg) {
         std::cout << "Receipt Stomp Command: " << receiptToStomp[frame.getHeaderValue("receipt-id")] << std::endl;
         if (receiptToStomp[frame.getHeaderValue("receipt-id")] == "DISCONNECT") {
             std::cout << "Disconnected" << std::endl;
+            channelToId.clear();
+            idToChannel.clear();
+            username = "";
             connected = false;
             return true;
         }
@@ -74,9 +77,10 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("host", host);
                 frame.addHeader("login", username);
                 frame.addHeader("passcode", passcode);
-                frame.addHeader("receipt", "123");
-                receiptToStomp["123"] = isValidCommand = true;
-
+                frame.addHeader("receipt", std::to_string(receiptCounter));
+                receiptToStomp[std::to_string(receiptCounter)] = "CONNECT";
+                isValidCommand = true;
+                receiptCounter++;
                 this->username = username;
             }
         }
@@ -88,14 +92,12 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("destination", channel);
                 frame.addHeader("id", std::to_string(subIDCounter));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
-
                 channelToId[channel] = subIDCounter;
                 idToChannel[subIDCounter] = channel;
-
+                receiptToStomp[std::to_string(receiptCounter)] = "SUBSCRIBE";
                 subIDCounter++;
                 receiptCounter++;
                 isValidCommand = true;
-
             } else {
                 std::cout << "you are already subscribed to " << channel << std::endl;
             }
@@ -107,6 +109,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.setType("UNSUBSCRIBE");
                 frame.addHeader("id", std::to_string(id));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
+                receiptToStomp[std::to_string(receiptCounter)] = "UNSUBSCRIBE";
                 channelToId.erase(channel);
                 idToChannel.erase(id);
                 receiptCounter++;
@@ -178,7 +181,6 @@ void StompProtocol::handleUserInput(std::string command) {
                 receiptToStomp[std::to_string(receiptCounter)] = "DISCONNECT";
                 receiptCounter++;
                 isValidCommand = true;
-                connected = false;
             }
         }
     }
