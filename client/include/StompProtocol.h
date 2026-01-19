@@ -4,6 +4,7 @@
 #include "../include/NetworkClient.h"
 #include "../include/Frame.h"
 #include "../include/event.h"
+#include "../include/Game.h"
 #include "NetworkClient.h"
 #include <string>
 #include <iostream>
@@ -22,6 +23,8 @@ bool report;
 // <receipt_id, frameType>
 std::map<std::string, std::string> receiptToStomp;
 //<game, <event-user, events>>
+std::map<std::string, Game> games; // map<game_name, Game object>
+// TODO: Update the game though the games class rather than gameUpdates;
 std::map<std::string, std::map<std::string, std::vector<Event>>> gameUpdates;
 NetworkClient networkClient;
 public:

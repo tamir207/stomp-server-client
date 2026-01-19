@@ -12,6 +12,7 @@ StompProtocol::StompProtocol()
       idToChannel(),
       connected(false),
       receiptToStomp(),
+      games(),
       networkClient(),
       gameUpdates(),
       report(false),
