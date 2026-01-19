@@ -23,6 +23,6 @@ public interface Connections<T> {
 
     Map<Integer, String> getSubscribers(String channel);
 
-    int getMessageId();
+    int incrementAndGetId();
 
 }

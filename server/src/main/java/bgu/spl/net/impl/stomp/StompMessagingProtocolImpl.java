@@ -153,14 +153,12 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                     shouldTerminate = true;
                     return;
                 } else if (subscribers != null) {
+                    int messageId = connections.incrementAndGetId();
                     for (Map.Entry<Integer, String> subcriber : subscribers.entrySet()) {
                         String subscriptionId = subcriber.getValue();
-                        int messageId = connections.getMessageId();
                         String msg = "MESSAGE\nsubscription:" + subscriptionId +
                                 "\nmessage-id:" + messageId + "\ndestination:" + des + "\n\n" + body + '\0';
-                        if (connectionId != subcriber.getKey()) {
-                            connections.send(subcriber.getKey(), msg);
-                        }
+                        connections.send(subcriber.getKey(), msg);
                     }
 
                     sendReceipt(headers.get("receipt"));

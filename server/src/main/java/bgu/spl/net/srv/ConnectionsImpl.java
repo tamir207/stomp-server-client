@@ -31,8 +31,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public int getMessageId() {
-        return messageId.get();
+    public int incrementAndGetId() {
+        return messageId.incrementAndGet();
     }
 
     @Override
@@ -41,7 +41,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (handler == null)
             return false;
         handler.send(msg);
-        messageId.incrementAndGet();
         return true;
     }
 
