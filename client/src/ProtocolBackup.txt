@@ -42,7 +42,16 @@ bool StompProtocol::handleServerInput(std::string msg) {
             connected = false;
             return true;
         } else if (receiptAttachedFrame.getType() == "SUBSCRIBE") {
+            std::string channel = receiptAttachedFrame.getHeaderValue("destination");
+            channelToId[channel] = subIDCounter;
+            idToChannel[subIDCounter] = channel;
             std::cout << "Joined channel " << receiptAttachedFrame.getHeaderValue("destination") << std::endl;
+        } else if (receiptAttachedFrame.getType() == "UNSUBSCRIBE") {
+            int subscriptionId = std::stoi(receiptAttachedFrame.getHeaderValue("id"));
+            std::string channel = idToChannel[subscriptionId];
+            channelToId.erase(channel);
+            idToChannel.erase(subscriptionId);
+            std::cout << "Exited channel " << channel << std::endl;
         }
     }
 
@@ -101,8 +110,6 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("destination", channel);
                 frame.addHeader("id", std::to_string(subIDCounter));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
-                channelToId[channel] = subIDCounter;
-                idToChannel[subIDCounter] = channel;
                 receiptToStomp[std::to_string(receiptCounter)] = frame;
                 subIDCounter++;
                 receiptCounter++;
@@ -124,13 +131,10 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("id", std::to_string(id));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
                 receiptToStomp[std::to_string(receiptCounter)] = frame;
-                channelToId.erase(channel);
-                idToChannel.erase(id);
-                receiptCounter++;
                 isValidCommand = true;
+                receiptCounter++;
             } else {
                 std::cout << "Can't exit because you are not subscribed to " << channel << std::endl;
-                return;
             }
         } else if (words[0] == "report") {
             if (!connected) {

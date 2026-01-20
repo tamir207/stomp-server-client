@@ -8,3 +8,4 @@ report data/events1.json
 join US_Canada
 exit US_Canada
 report data/events3.json
+./bin/StompWCIClient
