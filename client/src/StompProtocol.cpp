@@ -41,6 +41,8 @@ bool StompProtocol::handleServerInput(std::string msg) {
             username = "";
             connected = false;
             return true;
+        } else if (receiptType == "SUBSCRIBE") {
+                        std::cout << "Disconnected" << std::endl;
         }
     }
 
