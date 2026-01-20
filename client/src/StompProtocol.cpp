@@ -36,7 +36,7 @@ bool StompProtocol::handleServerInput(std::string msg) {
         auto it = games.find(frame.getHeaderValue("destination"));
         if (it != games.end()) {
             Game& game = it->second;
-            game.addEvents(frame.getBody());
+            game.addEvent(frame.getBody());
         }
     } else if (frame.getType() == "RECEIPT") {
         Frame receiptAttachedFrame = receiptToStomp[frame.getHeaderValue("receipt-id")];
@@ -172,42 +172,12 @@ void StompProtocol::handleUserInput(std::string command) {
                 }
 
                 isValidCommand = true;
-
-                for (const auto& event : parsed.events) {
-                    gameUpdates[gameName][username].push_back(event);
-
-                    std::string body = "user: " + username + "\n";
-                    body += "team a: " + event.get_team_a_name() + "\n";
-                    body += "team b: " + event.get_team_b_name() + "\n";
-                    body += "event name: " + event.get_name() + "\n";
-                    body += "time: " + std::to_string(event.get_time()) + "\n";
-                    body += "general game updates:\n";
-                    for (const auto& update : event.get_game_updates()) {
-                        body += "    " + update.first + ": " + update.second + "\n";
-                    }
-                    body += "team a updates:\n";
-                    for (const auto& update : event.get_team_a_updates()) {
-                        body += "    " + update.first + ": " + update.second + "\n";
-                    }
-                    body += "team b updates:\n";
-                    for (const auto& update : event.get_team_b_updates()) {
-                        body += "    " + update.first + ": " + update.second + "\n";
-                    }
-                    body += "description:\n" + event.get_description();
-
-                    auto& eventsList = gameUpdates[gameName][username];
-                    std::sort(eventsList.begin(), eventsList.end(), [](const Event& a, const Event& b) {
-                        return a.get_time() < b.get_time();
-                    });
-
+                for (Event& event : parsed.events) {
+                    event.set_username(username);
+                    Frame msgFrame;
                     frame.setType("SEND");
                     frame.addHeader("destination", gameName);
-                    frame.setBody(body);
-
-                    std::cout << "--------------STOMP-SEND--------------" << std::endl;
-                    std::cout << frame.toString() << std::endl;
-                    std::cout << "--------------STOMP-SEND--------------" << std::endl;
-
+                    frame.setBody(event.toString());
                     if (!networkClient.sendFrame(frame.toString())) {
                         std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
                         return;

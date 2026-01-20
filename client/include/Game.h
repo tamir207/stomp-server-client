@@ -18,9 +18,9 @@ public:
     // Returns a formmated string summary of the events sent by a speific user.
     std::string summarize(const std::string& username);
     // Return a formmated string event ready to send to server
-    std::string generateReport(const std::string& username, names_and_events parsed);
+    // std::string generateReport(const std::string& username, names_and_events parsed);
     // When receiving MESSAGE, pass the body here. This will add it to events with the corresponding user name.
-    void addEvents(const std::string& frameBody);
+    void addEvent(const std::string& singleEvent);
     // Retreive the event of a specific user
     const std::string& get_team_a_name() const;
     const std::string& get_team_b_name() const;

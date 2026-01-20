@@ -85,22 +85,21 @@ std::string Game::print_events() const {
     res += "--------------------------------------------\n";
     return res;
 }
+// Not needed at the moment
+// std::string Game::generateReport(const std::string& username, names_and_events parsed) {
+//     std::string report;
+//     for (const auto& event : parsed.events) {
+//         if (username == event.get_username()) {
+//             report += event.toString();
+//             report += "\n\n";
+//         }
+//     }
 
-std::string Game::generateReport(const std::string& username, names_and_events parsed) {
-    std::string report;
-    for (const auto& event : parsed.events) {
-        if (username == event.get_username()) {
-            report += event.toString();
-            report += "\n\n";
-        }
-    }
+//     return report;
+// }
 
-    return report;
-}
-
-void Game::addEvents(const std::string& frameBody) {
-    std::vector<std::string> lines = Utils::splitWithEmpty(frameBody, '\n');
-    std::vector<Event> newEvents;
+void Game::addEvent(const std::string& singleEvent) {
+    std::vector<std::string> lines = Utils::splitNoEmpty(singleEvent, '\n');
     std::string username;
     std::string team_a_name;
     std::string team_b_name;
@@ -113,76 +112,53 @@ void Game::addEvents(const std::string& frameBody) {
     bool beforeHalftime;
     size_t i = 0;
 
-    // for (size_t j = 0; j < lines.size(); j++) {
-    //     std::cout << "-------------------" << std::endl;
-    //     std::cout << lines[j] << std::endl;
-    // }
-
-    for (; i < lines.size();) {
-        if (!lines[i].empty()) {
-            std::vector<std::string> splittedLine = Utils::splitNoEmpty(lines[i], ':');
-            std::string key = splittedLine[0];
-            if (key == "username") {
-                username = splittedLine[1];
-            } else if (key == "team a") {
-                team_a_name = splittedLine[1];
-            } else if (key == "team b") {
-                team_b_name = splittedLine[1];
-            } else if (key == "event name") {
-                name = splittedLine[1];
-            } else if (key == "time") { // key == "time"
-                time = std::stoi(splittedLine[1]);
-            } else if (key == "general game updates") {
+    for (; i < lines.size(); i++) {
+        std::vector<std::string> splittedLine = Utils::splitNoEmpty(lines[i], ':');
+        std::string key = splittedLine[0];
+        if (key == "username") {
+            username = splittedLine[1];
+        } else if (key == "team a") {
+            team_a_name = splittedLine[1];
+        } else if (key == "team b") {
+            team_b_name = splittedLine[1];
+        } else if (key == "event name") {
+            name = splittedLine[1];
+        } else if (key == "time") { // key == "time"
+            time = std::stoi(splittedLine[1]);
+        } else if (key == "general game updates") {
+            while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
                 i++;
-                for (; lines[i][0] == ' ' && lines[i][1] == ' ' && lines[i][2] == ' ' && lines[i][3] == ' '; i++) {
-                    std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                    game_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
-                }
-            } else if (key == "team a updates") {
-                i++;
-                for (; lines[i][0] == ' ' && lines[i][1] == ' ' && lines[i][2] == ' ' && lines[i][3] == ' '; i++) {
-                    std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                    team_a_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
-                }
-            } else if (key == "team b updates") {
-                i++;
-                for (; lines[i][0] == ' ' && lines[i][1] == ' ' && lines[i][2] == ' ' && lines[i][3] == ' '; i++) {
-                    std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                    team_b_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
-                }
-            } else if (key == "description") {
-                description = splittedLine[1];
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
+                game_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
             }
-        } else {
-            if (i == 0 || lines[i - 1].empty())
-                continue;
-
-            Event newEvent(
-                team_a_name, team_b_name, name, time, game_updates, team_a_updates, team_b_updates, description
-            );
-            newEvent.set_username(username);
-
-            if (game_updates["    before halftime"] == " false") { // TODO: MUST ADD TRIM()
-                newEvent.make_second_half_time();
+        } else if (key == "team a updates") {
+            while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
+                i++;
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
+                team_a_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
             }
-
-            // auto it = std::lower_bound(events.begin(), events.end(), newEvent, [](const Event& a, const Event& b) {
-            //     return a.compareTo(b) < 0;
-            // });
-            events.push_back(newEvent);
-
-            username = "";
-            team_a_name = "";
-            team_b_name = "";
-            name = "";
-            description = "";
-            time = 0;
-            game_updates.clear();
-            team_a_updates.clear();
-            team_b_updates.clear();
+        } else if (key == "team b updates") {
+            while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
+                i++;
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
+                team_b_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
+            }
+        } else if (key == "description") {
+            description = splittedLine[1];
         }
-        i++;
     }
 
-    std::sort(events.begin(), events.end(), [](const Event& a, const Event& b) { return a.compareTo(b); });
+    Event newEvent(team_a_name, team_b_name, name, time, game_updates, team_a_updates, team_b_updates, description);
+    newEvent.set_username(username);
+
+    if (game_updates["    before halftime"] == " false") { // TODO: MUST ADD TRIM()
+        newEvent.make_second_half_time();
+    }
+
+    auto it = std::lower_bound(events.begin(), events.end(), newEvent, [](const Event& a, const Event& b) {
+        return a.compareTo(b);
+    });
+
+    events.insert(it, newEvent);
+    // std::sort(events.begin(), events.end(), [](const Event& a, const Event& b) { return a.compareTo(b); });
 }

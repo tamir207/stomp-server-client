@@ -4,7 +4,7 @@
 #include <string>
 
 int main(int argc, char* argv[]) {
-    // names_and_events parsed = parseEventsFile("data/events4.json");
+    names_and_events parsed = parseEventsFile("data/events4.json");
     // std::string gameName = parsed.team_a_name + "_" + parsed.team_b_name;
     // Game game = Game(gameName);
     // std::string report = game.generateReport("Test username", parsed);
@@ -13,26 +13,33 @@ int main(int argc, char* argv[]) {
     // std::cout << report << std::endl;
     // std::cout << "&&&&&&&& GOT REPORT &&&&&&&&&&&" << std::endl;
 
-    // Event event1 = parsed.events[0];
-    // Event event2 = parsed.events[1];
-    // Event event3 = parsed.events[2];
+    Event event1 = parsed.events[0];
+    Event event2 = parsed.events[1];
+    Event event3 = parsed.events[2];
 
-    // event1.set_username("Ishai");
-    // event2.set_username("Tamir");
-    // event3.set_username("Meni");
-    // event3.make_second_half_time();
-    // std::cout << "&&&&&&&& compareTo TO TEST &&&&&&&&&&&" << std::endl;
-    // std::cout << "Should be true: " << event1.compareTo(event2) << std::endl;
-    // std::cout << "Should be flase: " << event2.compareTo(event1) << std::endl;
-    // // std::cout << "Should be 0: " << event2.compareToTo(event2) << std::endl;
-    // std::cout << "Should be false: " << event3.compareTo(event2) << std::endl;
-    // std::cout << "Should be true: " << event2.compareTo(event3) << std::endl;
+    event1.set_username("Ishai");
+    event2.set_username("Tamir");
+    event3.set_username("Meni");
+    event3.make_second_half_time();
+    std::cout << "&&&&&&&& compareTo TO TEST &&&&&&&&&&&" << std::endl;
+    std::cout << "Should be true: " << event1.compareTo(event2) << std::endl;
+    std::cout << "Should be flase: " << event2.compareTo(event1) << std::endl;
+    // std::cout << "Should be 0: " << event2.compareToTo(event2) << std::endl;
+    std::cout << "Should be false: " << event3.compareTo(event2) << std::endl;
+    std::cout << "Should be true: " << event2.compareTo(event3) << std::endl;
 
     std::cout << "&&&&&&&&&&&&&&& Game::addEvents test &&&&&&&&&&&&&&&" << std::endl;
-    std::string dat = "username: Ishai\nteam a: Germany\nteam b: Japan\nevent name: kickoff\ntime: 0\ngeneral game updates:\n    active: true\n    before halftime: true\nteam a updates:\nteam b updates:\ndescription: Message 1\n\nusername: Meni\nteam a: Germany\nteam b: Japan\nevent name: kickoff3\ntime: 25\ngeneral game updates:\n    active: true\n    before halftime: false\nteam a updates:\nteam b updates:\ndescription: Message 3\n\nusername: Tamir\nteam a: Germany\nteam b: Japan\nevent name: kickoff2\ntime: 30\ngeneral game updates:\n    active: true\n    before halftime: true\nteam a updates:\nteam b updates:\ndescription: Message 2\n\n";
+    std::string dat1 = "username: Ishai\nteam a: Germany\nteam b: Japan\nevent name: kickoff\ntime: 0\ngeneral game updates:\n    active: true\n    before halftime: true\nteam a updates:\nteam b updates:\ndescription: Message 1\n\n";
+
+    std::string dat2 = "username: Meni\nteam a: Germany\nteam b: Japan\nevent name: kickoff3\ntime: 25\ngeneral game updates:\n    active: true\n    before halftime: false\nteam a updates:\nteam b updates:\ndescription: Message 3\n\n";
+
+    std::string dat3 = "username: Tamir\nteam a: Germany\nteam b: Japan\nevent name: kickoff2\ntime: 30\ngeneral game updates:\n    active: true\n    before halftime: true\nteam a updates:\nteam b updates:\ndescription: Message 2\n\n";
+
     Game game2 = Game("Germany_Japan");
     std::cout << "Before add events" << std::endl;
-    game2.addEvents(dat);
+    game2.addEvent(dat3);
+    game2.addEvent(dat1);
+    game2.addEvent(dat2);
     std::cout << "After add events" << std::endl;
     std::cout << game2.print_events() << std::endl;
 }

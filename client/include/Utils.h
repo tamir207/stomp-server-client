@@ -4,5 +4,4 @@
 
 namespace Utils {
     std::vector<std::string> splitNoEmpty(const std::string& s, char delimiter);
-    std::vector<std::string> splitWithEmpty(const std::string& s, char delimiter);
 }
