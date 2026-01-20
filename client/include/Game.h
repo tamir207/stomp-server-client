@@ -2,22 +2,27 @@
 
 #include "../include/event.h"
 
-#include <string>
 #include <iostream>
+#include <string>
 
-class Game
-{
+class Game {
 private:
-std::vector<std::map<std::string, Event>> events; // vector<username, event>
-std::string gameName;
+    // Invariant: events are always ordered.
+    std::vector<Event> events;
+    std::string gameName;
+    std::string team_a_name;
+    std::string team_b_name;
 
 public:
-Game(const std::string& gameName);
-// Returns a formmated string summary of the events sent by a speific user.
-std::string summrize(const std::string& userName);
-// Return a formmated string event ready to send to server
-std::string generateReport(const std::string& userName, names_and_events parsed);
-// When receiving MESSAGE, pass the body here. This will add it to events with the corresponding user name.
-void addEvent(const std::string& frameBody);
-// Retreive the event of a specific user
+    Game(const std::string& gameName);
+    // Returns a formmated string summary of the events sent by a speific user.
+    std::string summarize(const std::string& username);
+    // Return a formmated string event ready to send to server
+    std::string generateReport(const std::string& username, names_and_events parsed);
+    // When receiving MESSAGE, pass the body here. This will add it to events with the corresponding user name.
+    void addEvents(const std::string& frameBody);
+    // Retreive the event of a specific user
+    const std::string& get_team_a_name() const;
+    const std::string& get_team_b_name() const;
+    std::string print_events() const;
 };

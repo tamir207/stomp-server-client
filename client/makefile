@@ -1,13 +1,17 @@
 CFLAGS:=-c -Wall -Weffc++ -g -std=c++11 -Iinclude
 LDFLAGS:=-lboost_system -lpthread
 
-all: EchoClient bin/StompWCIClient
+all: bin/EchoClient bin/StompWCIClient bin/GeneralTests
 
-EchoClient: bin/ConnectionHandler.o bin/echoClient.o
+bin/EchoClient: bin/ConnectionHandler.o bin/echoClient.o
 	g++ -o bin/EchoClient bin/ConnectionHandler.o bin/echoClient.o $(LDFLAGS)
 
-bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o
-	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o -lboost_system -lpthread
+bin/StompWCIClient: bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o bin/Game.o
+	g++ -o bin/StompWCIClient bin/ConnectionHandler.o bin/StompClient.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o bin/Game.o $(LDFLAGS)
+
+# FIX: Removed StompClient.o from the command and fixed output name (-o bin/GeneralTests)
+bin/GeneralTests: bin/ConnectionHandler.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o bin/Game.o bin/GeneralTests.o
+	g++ -o bin/GeneralTests bin/ConnectionHandler.o bin/event.o bin/StompProtocol.o bin/Utils.o bin/Frame.o bin/NetworkClient.o bin/Game.o bin/GeneralTests.o $(LDFLAGS)
 
 bin/ConnectionHandler.o: src/ConnectionHandler.cpp
 	g++ $(CFLAGS) -o bin/ConnectionHandler.o src/ConnectionHandler.cpp
@@ -25,7 +29,7 @@ bin/StompProtocol.o: src/StompProtocol.cpp
 	g++ $(CFLAGS) -o bin/StompProtocol.o src/StompProtocol.cpp
 
 bin/NetworkClient.o: src/NetworkClient.cpp
-	g++ $(CFLAGS) -o bin/NetworkClient.o src/NetworkClient.cpp	
+	g++ $(CFLAGS) -o bin/NetworkClient.o src/NetworkClient.cpp  
 
 bin/Utils.o: src/Utils.cpp
 	g++ $(CFLAGS) -o bin/Utils.o src/Utils.cpp
@@ -33,7 +37,12 @@ bin/Utils.o: src/Utils.cpp
 bin/Frame.o: src/Frame.cpp
 	g++ $(CFLAGS) -o bin/Frame.o src/Frame.cpp
 
+bin/Game.o: src/Game.cpp
+	g++ $(CFLAGS) -o bin/Game.o src/Game.cpp
+
+bin/GeneralTests.o: src/GeneralTests.cpp
+	g++ $(CFLAGS) -o bin/GeneralTests.o src/GeneralTests.cpp
+
 .PHONY: clean
 clean:
 	rm -f bin/*
-	

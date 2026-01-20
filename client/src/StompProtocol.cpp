@@ -4,6 +4,7 @@
 #include "../include/Utils.h"
 #include "../include/event.h"
 #include "../include/json.hpp"
+#include <fstream>
 
 StompProtocol::StompProtocol()
     : subIDCounter(1),
@@ -31,6 +32,12 @@ bool StompProtocol::handleServerInput(std::string msg) {
     } else if (frame.getType() == "CONNECTED") {
         std::cout << "Login successful" << std::endl;
         connected = true;
+    } else if (frame.getType() == "MESSAGE") {
+        auto it = games.find(frame.getHeaderValue("destination"));
+        if (it != games.end()) {
+            Game& game = it->second;
+            game.addEvents(frame.getBody());
+        }
     } else if (frame.getType() == "RECEIPT") {
         Frame receiptAttachedFrame = receiptToStomp[frame.getHeaderValue("receipt-id")];
         std::cout << "Receipt Stomp Command: " << receiptAttachedFrame.getType() << std::endl;
@@ -51,7 +58,7 @@ bool StompProtocol::handleServerInput(std::string msg) {
 
 void StompProtocol::handleUserInput(std::string command) {
     Frame frame;
-    std::vector<std::string> words = Utils::split(command, ' ');
+    std::vector<std::string> words = Utils::splitNoEmpty(command, ' ');
     size_t len = words.size();
 
     if (command.size() == 0) {
@@ -86,6 +93,24 @@ void StompProtocol::handleUserInput(std::string command) {
                 isValidCommand = true;
                 receiptCounter++;
                 this->username = username;
+            }
+        } else if (words[0] == "summary") {
+            std::string gameName = words[1];
+            std::string userName = words[2];
+            std::string filePath = words[3];
+
+            if (games.find(gameName) != games.end()) {
+                std::string summaryOutput = games.at(gameName).summarize(userName);
+
+                if (summaryOutput.empty()) {
+                    std::cout << "The user " << userName << " has not reported on the game " << gameName << std::endl;
+                } else {
+                    std::ofstream fileStream(filePath);
+                    if (fileStream.is_open()) {
+                        fileStream << summaryOutput;
+                        fileStream.close();
+                    }
+                }
             }
         }
     } else if (len >= 2) {

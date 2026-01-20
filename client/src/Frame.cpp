@@ -11,13 +11,13 @@ Frame::Frame(std::string msg)
     : type(""),
       headers(),
       body("") {
-    std::vector<std::string> lines = Utils::split(msg, '\n');
+    std::vector<std::string> lines = Utils::splitNoEmpty(msg, '\n');
     if (lines.empty())
         return;
     type = lines[0];
     size_t i = 1;
     while (i < lines.size() && !lines[i].empty()) {
-        std::vector<std::string> parts = Utils::split(lines[i], ':');
+        std::vector<std::string> parts = Utils::splitNoEmpty(lines[i], ':');
         if (parts.size() >= 2)
             headers[parts[0]] = parts[1];
         i++;
