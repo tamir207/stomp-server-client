@@ -89,8 +89,10 @@ std::string Game::print_events() const {
 std::string Game::generateReport(const std::string& username, names_and_events parsed) {
     std::string report;
     for (const auto& event : parsed.events) {
-        report += event.toString();
-        report += "\n\n";
+        if (username == event.get_username()) {
+            report += event.toString();
+            report += "\n\n";
+        }
     }
 
     return report;
@@ -160,7 +162,7 @@ void Game::addEvents(const std::string& frameBody) {
             );
             newEvent.set_username(username);
 
-            if (game_updates["    before halftime"] == " false") {
+            if (game_updates["    before halftime"] == " false") { // TODO: MUST ADD TRIM()
                 newEvent.make_second_half_time();
             }
 
