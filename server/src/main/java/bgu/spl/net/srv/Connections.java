@@ -2,6 +2,7 @@ package bgu.spl.net.srv;
 
 import java.io.IOException;
 import java.util.Map;
+import bgu.spl.net.impl.data.LoginStatus;
 
 public interface Connections<T> {
 
@@ -13,7 +14,7 @@ public interface Connections<T> {
 
     boolean addNewClient(int connectionId, ConnectionHandler<T> handler);
 
-    int addUser(int connectionId, String username, String password);
+    LoginStatus addUser(int connectionId, String username, String password);
 
     boolean addSubscriber(int connectionId, String topic, String subscriptionId);
 

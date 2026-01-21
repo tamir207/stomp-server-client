@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import bgu.spl.net.api.StompMessagingProtocol;
+import bgu.spl.net.impl.data.LoginStatus;
 import bgu.spl.net.srv.ConnectionHandler;
 import bgu.spl.net.srv.Connections;
 
@@ -49,12 +50,14 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         }
 
         // if (!connections.isUserConnected(connectionId)) {
-        //     System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
-        //     return;
+        // System.err.println("[ERROR] Could not find handler for connected id: " +
+        // connectionId);
+        // return;
         // }
 
         if (!"CONNECT".equals(type) && !connections.isUserConnected(connectionId)) {
-            connections.send(connectionId, generateErrorMessage(null, "Not connected", message, "You must send a CONNECT frame first"));
+            connections.send(connectionId,
+                    generateErrorMessage(null, "Not connected", message, "You must send a CONNECT frame first"));
             return;
         }
 
@@ -71,26 +74,35 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 System.out.println(headers.get("passcode"));
                 System.out.println(headers);
                 System.out.println("ffffffffffffffffffffffff");
-                int status = connections.addUser(this.connectionId, headers.get("login"), headers.get("passcode"));
-                if (status == -1) {
+                LoginStatus status = connections.addUser(this.connectionId, headers.get("login"),
+                        headers.get("passcode"));
+
+                if (LoginStatus.WRONG_PASSWORD.equals(status)) {
                     connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "Wrong password", message,
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
                     shouldTerminate = true;
-                } else if (status == 0) {
-                    System.out.println("==================== User akready loggin in!!!!!!!!");
+                } else if (LoginStatus.ADDED_NEW_USER.equals(status) || LoginStatus.LOGGED_IN_SUCCESSFULLY.equals(status)) {
+                    System.out.println("::::::::::::::: GOOD CONNECTION ID: :::::::::::::: " + connectionId);
+                    connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
+                    sendReceipt(headers.get("receipt"));
+                } else if (LoginStatus.ALREADY_LOGGED_IN.equals(status)) {
+                    System.out.println("==================== User already loggin in!!!!!!!!");
                     connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "User already logged in", message,
                                     "User with the same username already logged in"));
                     System.out.println("::::::::::::::: BAD CONNECTION ID: :::::::::::::: " + connectionId);
                     connections.disconnect(this.connectionId);
                     shouldTerminate = true;
-                } else {
-                    System.out.println("::::::::::::::: GOOD CONNECTION ID: :::::::::::::: " + connectionId);
-                    connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
-                    sendReceipt(headers.get("receipt"));
+                } else if (LoginStatus.CLIENT_ALREADY_CONNECTED.equals(status)) {
+                    connections.send(connectionId,
+                            generateErrorMessage(headers.get("receipt"), "client already connected", message,
+                                    "The client is already logged in, log out before trying again"));
+                    connections.disconnect(this.connectionId);
+                    shouldTerminate = true;
                 }
+
             }
         } else if ("SUBSCRIBE".equals(type)) {
             String des = headers.get("destination");

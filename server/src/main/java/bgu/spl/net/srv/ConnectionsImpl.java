@@ -3,6 +3,9 @@ package bgu.spl.net.srv;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import bgu.spl.net.impl.data.Database;
+import bgu.spl.net.impl.data.LoginStatus;
 import bgu.spl.net.impl.data.User;
 
 public class ConnectionsImpl<T> implements Connections<T> {
@@ -11,12 +14,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private final Map<Integer, Map<String, String>> subscriptions;// Map<ConnectionID, Map<SubscriptionID, ChannelName>>
     private AtomicInteger messageId;
 
-    private final Map<String, User> registeredUsers;// Map<Username, User>
-    private final Map<Integer, User> activeUsers;// Map<ConnectionID, User>
-
-    // private final Map<String, Integer> usernameToID;
-    // private final Map<Integer, String> IDToUsername;
-    // private final Map<String, String> usernamesPasswords;
+    private final Database database;
 
     // Persistant data between sessions:
 
@@ -25,13 +23,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         channels = new ConcurrentHashMap<>();
         subscriptions = new ConcurrentHashMap<>();
         messageId = new AtomicInteger(1);
-
-        registeredUsers = new ConcurrentHashMap<>();
-        activeUsers = new ConcurrentHashMap<>();
-
-        // usernamesPasswords = new ConcurrentHashMap<>();
-        // usernameToID = new ConcurrentHashMap<>();
-        // IDToUsername = new ConcurrentHashMap<>();
+        database = Database.getInstance();
     }
 
     @Override
@@ -111,50 +103,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     @Override
-    public int addUser(int connectionId, String username, String password) {
-        // if (!usernamesPasswords.containsKey(username)) {
-        // System.out.println("=======================");
-        // System.out.println("==========connectionId======= " + connectionId);
-        // System.out.println("==========username=========== " + username);
-        // System.out.println("==========password=========== " + password);
-        // System.out.println("=======================");
-        // usernamesPasswords.put(username, password);
-        // usernameToID.put(username, connectionId);
-        // IDToUsername.put(connectionId, username);
-        // return 1;
-        // } else if (!usernamesPasswords.get(username).equals(password)) {
-        // return -1;
-        // } else if (usernameToID.containsKey(username)) {
-        // return 0;
-        // } else {
-        // usernameToID.put(username, connectionId);
-        // IDToUsername.put(connectionId, username);
-        // return 1;
-        // }
-
-        User user = registeredUsers.get(username);
-
-        if (user == null) {
-            user = new User(connectionId, username, password);
-            user.login();
-            registeredUsers.put(username, user);
-            activeUsers.put(connectionId, user);
-            return 1;
-        }
-
-        if (!user.password.equals(password)) {
-            return -1;
-        }
-
-        if (user.isLoggedIn()) {
-            return 0;
-        }
-
-        user.setConnectionId(connectionId);
-        user.login();
-        activeUsers.put(connectionId, user);
-        return 1;
-
+    public LoginStatus addUser(int connectionId, String username, String password) {
+        return database.login(connectionId, username, password);
     }
 
     @Override
