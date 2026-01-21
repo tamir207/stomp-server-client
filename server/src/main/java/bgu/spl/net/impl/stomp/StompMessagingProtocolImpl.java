@@ -148,6 +148,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             sendReceipt(headers.get("receipt"));
         } else if ("SEND".equals(type)) {
             String des = headers.get("destination");
+            String filename = headers.get("filename");
             if (des == null) {
                 connections.send(
                         connectionId,
@@ -175,6 +176,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                         String subscriptionId = subcriber.getValue();
                         String msg = "MESSAGE\nsubscription:" + subscriptionId +
                                 "\nmessage-id:" + messageId + "\ndestination:" + des + "\n\n" + body + '\0';
+                        connections.trackFileUpload(connectionId, filename, des);
                         connections.send(subcriber.getKey(), msg);
                     }
 

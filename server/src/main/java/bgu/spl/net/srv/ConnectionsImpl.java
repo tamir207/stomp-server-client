@@ -109,18 +109,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public void disconnect(int connectionId) {
-        // String username = IDToUsername.get(connectionId);
-        // connectedHandlers.remove(connectionId);
-        // if (username != null) {
-        // usernameToID.remove(username);
-        // }
-        // IDToUsername.remove(connectionId);
-
-        User user = activeUsers.get(connectionId);
-        if (user != null) {
-            user.logout();
-            activeUsers.remove(connectionId);
-        }
+        database.logout(connectionId);
         connectedHandlers.remove(connectionId);
 
         Map<String, String> userSubs = subscriptions.get(connectionId);
@@ -138,18 +127,24 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public boolean isUserConnected(int connectionId) {
-        // return this.connectedHandlers.get(connectionId) != null;
-        User user = activeUsers.get(connectionId);
+        User user = database.getUser(connectionId);
         return user != null && user.isLoggedIn();
     }
 
     @Override
     public String getUsername(int connectionId) {
-        User user = activeUsers.get(connectionId);
-        if (user != null) {
-            return user.name;
-        }
-        return null;
+        User user = database.getUser(connectionId);
+        return (user != null) ? user.name : null;
     }
 
+    @Override
+    public void trackFileUpload(int connectionId, String fileName, String destination) {
+        User user = database.getUser(connectionId);
+        database.trackFileUpload(user.name, fileName, destination);
+    }
+
+    @Override
+    public void report() {
+        database.printReport();
+    }
 }

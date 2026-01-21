@@ -28,4 +28,7 @@ public interface Connections<T> {
 
     String getUsername(int connectionId);
 
+    void trackFileUpload(int connectionId, String fileName, String destination);
+
+    void report();
 }
