@@ -9,7 +9,6 @@
 #include <string>
 #include <iostream>
 
-// TODO: implement the STOMP protocol
 class StompProtocol
 {
 private:
@@ -24,8 +23,6 @@ bool report;
 std::map<std::string, Frame> receiptToStomp;
 //<game, <event-user, events>>
 std::map<std::string, Game> games; // map<game_name, Game object>
-// TODO: Update the game though the games class rather than gameUpdates;
-std::map<std::string, std::map<std::string, std::vector<Event>>> gameUpdates; // TODO
 NetworkClient networkClient;
 public:
 

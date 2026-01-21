@@ -15,7 +15,6 @@ StompProtocol::StompProtocol()
       receiptToStomp(),
       games(),
       networkClient(),
-      gameUpdates(),
       report(false),
       username() { }
 
@@ -23,6 +22,8 @@ StompProtocol::~StompProtocol() { networkClient.disconnect(); }
 
 bool StompProtocol::handleServerInput(std::string msg) {
     Frame frame = Frame(msg);
+    std::cout << "Frame body FIRSTTTTTTTTT: " << frame.getBody() << std::endl;
+
     std::cout << "------------STOMP-RECEIVED------------" << std::endl;
     std::cout << msg << std::endl;
     std::cout << "------------STOMP-RECEIVED------------" << std::endl;
@@ -36,6 +37,7 @@ bool StompProtocol::handleServerInput(std::string msg) {
         auto it = games.find(frame.getHeaderValue("destination"));
         if (it != games.end()) {
             Game& game = it->second;
+            std::cout << "Frame body: " << frame.getBody() << std::endl;
             game.addEvent(frame.getBody());
         }
     } else if (frame.getType() == "RECEIPT") {
@@ -98,13 +100,28 @@ void StompProtocol::handleUserInput(std::string command) {
             std::string gameName = words[1];
             std::string userName = words[2];
             std::string filePath = words[3];
+            std::cout << "Game name: " << gameName << std::endl;
+
+            // for (const auto& [gameName, gameObj] : games) {
+            //     std::cout << "Game key: " << gameName << std::endl;
+            // }
+            bool ans = games.find(gameName) != games.end();
+            std::cout << "Should be true: " << ans << std::endl;
 
             if (games.find(gameName) != games.end()) {
+                std::cout << "Found game! " << gameName << " Username: " << userName << std::endl;
                 std::string summaryOutput = games.at(gameName).summarize(userName);
+                std::cout << "********************* summary output: **************************\n"
+                          << summaryOutput << std::endl;
 
                 if (summaryOutput.empty()) {
                     std::cout << "The user " << userName << " has not reported on the game " << gameName << std::endl;
                 } else {
+                    if (Utils::writeStringToFile(filePath, summaryOutput))
+                        std::cout << "Write successful\n";
+                    else
+                        std::cout << "Write failed\n";
+
                     std::ofstream fileStream(filePath);
                     if (fileStream.is_open()) {
                         fileStream << summaryOutput;
@@ -112,6 +129,8 @@ void StompProtocol::handleUserInput(std::string command) {
                     }
                 }
             }
+
+            return;
         }
     } else if (len >= 2) {
         if (words[0] == "join") {
@@ -129,6 +148,8 @@ void StompProtocol::handleUserInput(std::string command) {
                 channelToId[channel] = subIDCounter;
                 idToChannel[subIDCounter] = channel;
                 receiptToStomp[std::to_string(receiptCounter)] = frame;
+                Game newGame = Game(channel);
+                games.emplace(channel, Game(newGame));
                 subIDCounter++;
                 receiptCounter++;
                 isValidCommand = true;

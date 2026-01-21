@@ -3,6 +3,12 @@
 #include <algorithm>
 #include <ostream>
 
+Game::Game()
+    : gameName(""),
+      events(),
+      team_a_name(""),
+      team_b_name("") { }
+
 Game::Game(const std::string& name)
     : gameName(name),
       events(),
@@ -27,6 +33,8 @@ std::string Game::summarize(const std::string& username) {
             userEvents.push_back(currentEvent);
         }
     }
+
+    std::cout << "User Events: " << userEvents.size();
 
     if (userEvents.empty()) {
         return "";
@@ -85,18 +93,6 @@ std::string Game::print_events() const {
     res += "--------------------------------------------\n";
     return res;
 }
-// Not needed at the moment
-// std::string Game::generateReport(const std::string& username, names_and_events parsed) {
-//     std::string report;
-//     for (const auto& event : parsed.events) {
-//         if (username == event.get_username()) {
-//             report += event.toString();
-//             report += "\n\n";
-//         }
-//     }
-
-//     return report;
-// }
 
 void Game::addEvent(const std::string& singleEvent) {
     std::vector<std::string> lines = Utils::splitNoEmpty(singleEvent, '\n');
@@ -114,44 +110,47 @@ void Game::addEvent(const std::string& singleEvent) {
 
     for (; i < lines.size(); i++) {
         std::vector<std::string> splittedLine = Utils::splitNoEmpty(lines[i], ':');
-        std::string key = splittedLine[0];
+        std::string key = Utils::trim(splittedLine[0]);
         if (key == "username") {
-            username = splittedLine[1];
+            username = Utils::trim(splittedLine[1]);
         } else if (key == "team a") {
-            team_a_name = splittedLine[1];
+            team_a_name = Utils::trim(splittedLine[1]);
         } else if (key == "team b") {
-            team_b_name = splittedLine[1];
+            team_b_name = Utils::trim(splittedLine[1]);
         } else if (key == "event name") {
-            name = splittedLine[1];
+            name = Utils::trim(splittedLine[1]);
         } else if (key == "time") { // key == "time"
-            time = std::stoi(splittedLine[1]);
+            time = std::stoi(Utils::trim(splittedLine[1]));
         } else if (key == "general game updates") {
             while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
                 i++;
-                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                game_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
+                std::string trimmedLine = Utils::trim(lines[i]);
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(trimmedLine, ':');
+                game_updates[splittedUpdateLines[0]] = Utils::trim(splittedUpdateLines[1]);
             }
         } else if (key == "team a updates") {
             while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
                 i++;
-                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                team_a_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
+                std::string trimmedLine = Utils::trim(lines[i]);
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(trimmedLine, ':');
+                team_a_updates[splittedUpdateLines[0]] = Utils::trim(splittedUpdateLines[1]);
             }
         } else if (key == "team b updates") {
             while (i + 1 < lines.size() && lines[i + 1].size() > 0 && lines[i + 1][0] == ' ') {
                 i++;
-                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(lines[i], ':');
-                team_b_updates[splittedUpdateLines[0]] = splittedUpdateLines[1];
+                std::string trimmedLine = Utils::trim(lines[i]);
+                std::vector<std::string> splittedUpdateLines = Utils::splitNoEmpty(trimmedLine, ':');
+                team_b_updates[splittedUpdateLines[0]] = Utils::trim(splittedUpdateLines[1]);
             }
         } else if (key == "description") {
-            description = splittedLine[1];
+            description = Utils::trim(splittedLine[1]);
         }
     }
 
     Event newEvent(team_a_name, team_b_name, name, time, game_updates, team_a_updates, team_b_updates, description);
     newEvent.set_username(username);
 
-    if (game_updates["    before halftime"] == " false") { // TODO: MUST ADD TRIM()
+    if (game_updates["before halftime"] == "false") {
         newEvent.make_second_half_time();
     }
 

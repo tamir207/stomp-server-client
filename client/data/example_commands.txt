@@ -5,7 +5,37 @@ login 127.0.0.1:7777 tamir 123
 join Germany_Japan
 exit Germany_Japan
 report data/events1.json
+report data/events4.json
 join US_Canada
 exit US_Canada
 report data/events3.json
+summary Germany_Japan ishai data/ishai_summary.txt
 ./bin/StompWCIClient
+./bin/GeneralTests
+
+
+
+login 127.0.0.1:7777 ishai 222
+login 127.0.0.1:7777 tamir 123
+join France_England
+exit France_England
+report data/events_empty_updates.json
+
+join Germany_Japan
+exit Germany_Japan
+report data/events_germany_japan_1.json
+report data/events_germany_japan_2.json
+
+join Spain_Italy
+exit Spain_Italy
+report data/events_halftime_logic.json
+
+join Brazil_Argentina
+exit Brazil_Argentina
+report data/events_out_of_order.json
+
+summary France_England ishai data/ishai_summary.txt
+summary France_England tamir data/ishai_summary.txt
+summary Germany_Japan ishai data/ishai_summary.txt
+summary Germany_Japan tamir data/tamir_suumary.txt
+summary Brazil_Argentina tamir data/tamir_suumary.txt

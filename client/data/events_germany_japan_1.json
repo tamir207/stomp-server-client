@@ -1,0 +1,49 @@
+{
+    "team a": "Germany",
+    "team b": "Japan",
+    "events": [
+        {
+            "event name": "kickoff",
+            "time": 10,
+            "general game updates": {
+                "active": true,
+                "before halftime": true
+            },
+            "team a updates": {
+                "goals": "2"
+            },
+            "team b updates": {
+                "goals": "3"
+            },
+            "description": "Message 1"
+        },
+        {
+            "event name": "kickoff3",
+            "time": 25,
+            "general game updates": {
+                "active": true,
+                "before halftime": false
+            },
+            "team a updates": {
+                "goals": "5"
+            },
+            "team b updates": {},
+            "description": "Message 3"
+        },
+        {
+            "event name": "kickoff2",
+            "time": 30,
+            "general game updates": {
+                "active": true,
+                "before halftime": true
+            },
+            "team a updates": {
+                "goals": "4"
+            },
+            "team b updates": {
+                "goals": "4"
+            },
+            "description": "Message 2"
+        }
+    ]
+}

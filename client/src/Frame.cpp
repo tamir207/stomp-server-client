@@ -11,24 +11,29 @@ Frame::Frame(std::string msg)
     : type(""),
       headers(),
       body("") {
-    std::vector<std::string> lines = Utils::splitNoEmpty(msg, '\n');
-    if (lines.empty())
-        return;
-    type = lines[0];
-    size_t i = 1;
-    while (i < lines.size() && !lines[i].empty()) {
-        std::vector<std::string> parts = Utils::splitNoEmpty(lines[i], ':');
-        if (parts.size() >= 2)
-            headers[parts[0]] = parts[1];
-        i++;
+    size_t bodyDelimiter = msg.find("\n\n");
+    std::string headerSection;
+
+    if (bodyDelimiter == std::string::npos) {
+        headerSection = msg;
+    } else {
+        headerSection = msg.substr(0, bodyDelimiter);
+        body = msg.substr(bodyDelimiter + 2);
     }
 
-    i++;
-    while (i < lines.size()) {
-        body += lines[i];
-        if (i < lines.size() - 1)
-            body += "\n";
-        i++;
+    std::vector<std::string> lines = Utils::splitNoEmpty(headerSection, '\n');
+    if (lines.empty())
+        return;
+
+    type = lines[0];
+
+    for (size_t i = 1; i < lines.size(); i++) {
+        size_t colonPos = lines[i].find(':');
+        if (colonPos != std::string::npos) {
+            std::string key = lines[i].substr(0, colonPos);
+            std::string value = lines[i].substr(colonPos + 1);
+            headers[key] = value;
+        }
     }
 }
 
