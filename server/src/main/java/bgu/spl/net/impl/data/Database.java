@@ -31,28 +31,27 @@ public class Database {
 	 * @return Result string from SQL server
 	 */
 	private String executeSQL(String sql) {
-		return "DUMMY_RESPONSE";
-		// try (Socket socket = new Socket(sqlHost, sqlPort);
-		// 		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-		// 		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-		// 	// Send SQL with null terminator
-		// 	out.print(sql + '\0');
-		// 	out.flush();
-
-		// 	// Read response until null terminator
-		// 	StringBuilder response = new StringBuilder();
-		// 	int ch;
-		// 	while ((ch = in.read()) != -1 && ch != '\0') {
-		// 		response.append((char) ch);
-		// 	}
-
-		// 	return response.toString();
-
-		// } catch (Exception e) {
-		// 	System.err.println("SQL Error: " + e.getMessage());
-		// 	return "ERROR:" + e.getMessage();
-		// }
+		try (Socket socket = new Socket(sqlHost, sqlPort);
+			 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+			 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+			
+			// Send SQL with null terminator
+			out.print(sql + '\0');
+			out.flush();
+			
+			// Read response until null terminator
+			StringBuilder response = new StringBuilder();
+			int ch;
+			while ((ch = in.read()) != -1 && ch != '\0') {
+				response.append((char) ch);
+			}
+			
+			return response.toString();
+			
+		} catch (Exception e) {
+			System.err.println("SQL Error: " + e.getMessage());
+			return "ERROR:" + e.getMessage();
+		}
 	}
 
 	/**

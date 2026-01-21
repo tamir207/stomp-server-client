@@ -11,6 +11,7 @@ the methods below.
 import socket
 import sys
 import threading
+import sqlite3
 
 
 SERVER_NAME = "STOMP_PYTHON_SQL_SERVER"  # DO NOT CHANGE!
@@ -30,15 +31,58 @@ def recv_null_terminated(sock: socket.socket) -> str:
 
 
 def init_database():
-    pass
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password TEXT NOT NULL,
+                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS login_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                login_time TIMESTAMP,
+                logout_time TIMESTAMP,
+                FOREIGN KEY (username) REFERENCES users(username)
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS file_tracking (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                filename TEXT,
+                upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                game_channel TEXT,
+                FOREIGN KEY (username) REFERENCES users(username)
+            )
+        ''')
+        conn.commit()
 
 
 def execute_sql_command(sql_command: str) -> str:
-    return "done"
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql_command)
+            conn.commit()
+            return "SUCCESS"
+    except Exception as e:
+        return f"ERROR:{str(e)}"
 
 
 def execute_sql_query(sql_query: str) -> str:
-    return "done"
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql_query)
+            rows = cursor.fetchall()
+            results = [str(row) for row in rows]
+            return "SUCCESS|" + "|".join(results)
+    except Exception as e:
+        return f"ERROR:{str(e)}"
 
 
 def handle_client(client_socket: socket.socket, addr):
@@ -52,8 +96,17 @@ def handle_client(client_socket: socket.socket, addr):
 
             print(f"[{SERVER_NAME}] Received:")
             print(message)
+            clean_msg = message.strip()
+            msg_upper = clean_msg.upper()
+            
+            if msg_upper.startswith("SELECT"):
+                response = execute_sql_query(clean_msg)
+            elif any(msg_upper.startswith(w) for w in ["INSERT", "UPDATE", "DELETE", "CREATE"]):
+                response = execute_sql_command(clean_msg)
+            else:
+                response = "ERROR: Unsupported command or not SQL"
 
-            client_socket.sendall(b"done\0")
+            client_socket.sendall((response + "\0").encode("utf-8"))
 
     except Exception as e:
         print(f"[{SERVER_NAME}] Error handling client {addr}: {e}")
@@ -94,6 +147,7 @@ def start_server(host="127.0.0.1", port=7778):
 
 
 if __name__ == "__main__":
+    init_database()
     port = 7778
     if len(sys.argv) > 1:
         raw_port = sys.argv[1].strip()

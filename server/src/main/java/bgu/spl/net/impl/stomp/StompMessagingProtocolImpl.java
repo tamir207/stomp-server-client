@@ -184,6 +184,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 }
             }
         } else if ("DISCONNECT".equals(type)) {
+            connections.report();
             sendReceipt(headers.get("receipt"));
             connections.disconnect(connectionId);
         }
