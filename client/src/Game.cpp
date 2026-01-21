@@ -1,6 +1,7 @@
 #include "../include/Game.h"
 #include "../include/Utils.h"
 #include <algorithm>
+#include <cstddef>
 #include <ostream>
 
 Game::Game()
@@ -76,8 +77,8 @@ std::string Game::summarize(const std::string& username) {
 
     res += "Game event reports:\n";
     for (const auto& currentEvent : userEvents) {
-        res += std::to_string(currentEvent.get_time()) + " - " + currentEvent.get_name() + ":\n";
-        res += currentEvent.get_description() + "\n\n";
+        res += std::to_string(currentEvent.get_time()) + " - " + currentEvent.get_name() + ":\n\n";
+        res += currentEvent.get_description() + "\n\n\n";
     }
 
     return res;
@@ -150,7 +151,12 @@ void Game::addEvent(const std::string& singleEvent) {
     Event newEvent(team_a_name, team_b_name, name, time, game_updates, team_a_updates, team_b_updates, description);
     newEvent.set_username(username);
 
-    if (game_updates["before halftime"] == "false") {
+    auto findHalftime = game_updates.find("before halftime");
+    if (findHalftime != game_updates.end()) {
+        if (game_updates["before halftime"] == "false") {
+            newEvent.make_second_half_time();
+        }
+    } else if (time > 2700) {
         newEvent.make_second_half_time();
     }
 
