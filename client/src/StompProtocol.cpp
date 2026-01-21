@@ -175,10 +175,10 @@ void StompProtocol::handleUserInput(std::string command) {
                 for (Event& event : parsed.events) {
                     event.set_username(username);
                     Frame msgFrame;
-                    frame.setType("SEND");
-                    frame.addHeader("destination", gameName);
-                    frame.setBody(event.toString());
-                    if (!networkClient.sendFrame(frame.toString())) {
+                    msgFrame.setType("SEND");
+                    msgFrame.addHeader("destination", gameName);
+                    msgFrame.setBody(event.toString());
+                    if (!networkClient.sendFrame(msgFrame.toString())) {
                         std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
                         return;
                     }
