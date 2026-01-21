@@ -25,4 +25,6 @@ public interface Connections<T> {
 
     int incrementAndGetId();
 
+    String getUsername(int connectionId);
+
 }

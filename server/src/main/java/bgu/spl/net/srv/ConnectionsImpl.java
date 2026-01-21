@@ -3,26 +3,35 @@ package bgu.spl.net.srv;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import bgu.spl.net.impl.data.User;
 
 public class ConnectionsImpl<T> implements Connections<T> {
     private final Map<Integer, ConnectionHandler<T>> connectedHandlers;// Map<SubscriptionID, ConnectionHandler<T>>
     private final Map<String, Map<Integer, String>> channels;// Map<ChannelName, Map<ConnectionID, SubscriptionID>>
-    private final Map<String, Integer> usernameToID;
-    private final Map<Integer, String> IDToUsername;
     private final Map<Integer, Map<String, String>> subscriptions;// Map<ConnectionID, Map<SubscriptionID, ChannelName>>
     private AtomicInteger messageId;
 
+    private final Map<String, User> registeredUsers;// Map<Username, User>
+    private final Map<Integer, User> activeUsers;// Map<ConnectionID, User>
+
+    // private final Map<String, Integer> usernameToID;
+    // private final Map<Integer, String> IDToUsername;
+    // private final Map<String, String> usernamesPasswords;
+
     // Persistant data between sessions:
-    private final Map<String, String> usernamesPasswords;
 
     public ConnectionsImpl() {
         connectedHandlers = new ConcurrentHashMap<>();
-        usernamesPasswords = new ConcurrentHashMap<>();
         channels = new ConcurrentHashMap<>();
-        usernameToID = new ConcurrentHashMap<>();
-        IDToUsername = new ConcurrentHashMap<>();
         subscriptions = new ConcurrentHashMap<>();
         messageId = new AtomicInteger(1);
+
+        registeredUsers = new ConcurrentHashMap<>();
+        activeUsers = new ConcurrentHashMap<>();
+
+        // usernamesPasswords = new ConcurrentHashMap<>();
+        // usernameToID = new ConcurrentHashMap<>();
+        // IDToUsername = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -103,50 +112,94 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public int addUser(int connectionId, String username, String password) {
-        if (!usernamesPasswords.containsKey(username)) {
-            System.out.println("=======================");
-            System.out.println("==========connectionId======= " + connectionId);
-            System.out.println("==========username=========== " + username);
-            System.out.println("==========password=========== " + password);
-            System.out.println("=======================");
-            usernamesPasswords.put(username, password);
-            usernameToID.put(username, connectionId);
-            IDToUsername.put(connectionId, username);
-            return 1;
-        } else if (!usernamesPasswords.get(username).equals(password)) {
-            return -1;
-        } else if (usernameToID.containsKey(username)) {
-            return 0;
-        } else {
-            usernameToID.put(username, connectionId);
-            IDToUsername.put(connectionId, username);
+        // if (!usernamesPasswords.containsKey(username)) {
+        // System.out.println("=======================");
+        // System.out.println("==========connectionId======= " + connectionId);
+        // System.out.println("==========username=========== " + username);
+        // System.out.println("==========password=========== " + password);
+        // System.out.println("=======================");
+        // usernamesPasswords.put(username, password);
+        // usernameToID.put(username, connectionId);
+        // IDToUsername.put(connectionId, username);
+        // return 1;
+        // } else if (!usernamesPasswords.get(username).equals(password)) {
+        // return -1;
+        // } else if (usernameToID.containsKey(username)) {
+        // return 0;
+        // } else {
+        // usernameToID.put(username, connectionId);
+        // IDToUsername.put(connectionId, username);
+        // return 1;
+        // }
+
+        User user = registeredUsers.get(username);
+
+        if (user == null) {
+            user = new User(connectionId, username, password);
+            user.login();
+            registeredUsers.put(username, user);
+            activeUsers.put(connectionId, user);
             return 1;
         }
+
+        if (!user.password.equals(password)) {
+            return -1;
+        }
+
+        if (user.isLoggedIn()) {
+            return 0;
+        }
+
+        user.setConnectionId(connectionId);
+        user.login();
+        activeUsers.put(connectionId, user);
+        return 1;
+
     }
 
     @Override
     public void disconnect(int connectionId) {
-        String username = IDToUsername.get(connectionId);
-        connectedHandlers.remove(connectionId);
-        if (username != null) {
-            usernameToID.remove(username);
-        }
+        // String username = IDToUsername.get(connectionId);
+        // connectedHandlers.remove(connectionId);
+        // if (username != null) {
+        // usernameToID.remove(username);
+        // }
+        // IDToUsername.remove(connectionId);
 
-        IDToUsername.remove(connectionId);
+        User user = activeUsers.get(connectionId);
+        if (user != null) {
+            user.logout();
+            activeUsers.remove(connectionId);
+        }
+        connectedHandlers.remove(connectionId);
+
         Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
         if (userSubs != null) {
             for (Map.Entry<String, String> registeredChannels : userSubs.entrySet()) {
                 String channelName = registeredChannels.getValue();
                 Map<Integer, String> channel = channels.get(channelName);
-                channel.remove(connectionId);
+                if (channel != null) {
+                    channel.remove(connectionId);
+                }
             }
         }
     }
 
     @Override
     public boolean isUserConnected(int connectionId) {
-        return this.connectedHandlers.get(connectionId) != null;
+        // return this.connectedHandlers.get(connectionId) != null;
+        User user = activeUsers.get(connectionId);
+        return user != null && user.isLoggedIn();
+    }
+
+    @Override
+    public String getUsername(int connectionId) {
+        User user = activeUsers.get(connectionId);
+        if (user != null) {
+            return user.name;
+        }
+        return null;
     }
 
 }

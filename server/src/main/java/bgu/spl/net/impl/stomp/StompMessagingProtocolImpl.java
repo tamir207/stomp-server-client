@@ -48,8 +48,13 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             body += lines[i] + "\n";
         }
 
-        if (!connections.isUserConnected(connectionId)) {
-            System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
+        // if (!connections.isUserConnected(connectionId)) {
+        //     System.err.println("[ERROR] Could not find handler for connected id: " + connectionId);
+        //     return;
+        // }
+
+        if (!"CONNECT".equals(type) && !connections.isUserConnected(connectionId)) {
+            connections.send(connectionId, generateErrorMessage(null, "Not connected", message, "You must send a CONNECT frame first"));
             return;
         }
 
