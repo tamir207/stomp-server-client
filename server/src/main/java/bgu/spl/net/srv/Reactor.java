@@ -111,11 +111,10 @@ public class Reactor<T> implements Server<T> {
                 clientChan,
                 this);
 
-        int id = idGenerator++;
-        this.connections.addNewClient(id, handler);
-        protocol.start(id, connections);
-
+        this.connections.addNewClient(idGenerator, handler);
+        protocol.start(idGenerator, connections);
         clientChan.register(selector, SelectionKey.OP_READ, handler);
+        idGenerator++;
     }
 
     private void handleReadWrite(SelectionKey key) {

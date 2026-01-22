@@ -34,14 +34,14 @@ def init_database():
     with sqlite3.connect(DB_FILE) as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE users (
                 username TEXT PRIMARY KEY,
                 password TEXT NOT NULL,
                 registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS login_history (
+            CREATE TABLE login_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT,
                 login_time TIMESTAMP,
@@ -50,7 +50,7 @@ def init_database():
             )
         ''')
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS file_tracking (
+            CREATE TABLE file_tracking (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT,
                 filename TEXT,

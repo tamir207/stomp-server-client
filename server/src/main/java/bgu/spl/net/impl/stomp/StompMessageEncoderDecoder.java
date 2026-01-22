@@ -1,10 +1,10 @@
-package bgu.spl.net.impl.echo;
+package bgu.spl.net.impl.stomp;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class LineMessageEncoderDecoder implements MessageEncoderDecoder<String> {
+public class StompMessageEncoderDecoder implements MessageEncoderDecoder<String> {
 
     private byte[] bytes = new byte[1 << 10]; //start with 1k
     private int len = 0;
@@ -13,7 +13,7 @@ public class LineMessageEncoderDecoder implements MessageEncoderDecoder<String> 
     public String decodeNextByte(byte nextByte) {
         //notice that the top 128 ascii characters have the same representation as their utf-8 counterparts
         //this allow us to do the following comparison
-        if (nextByte == '\n') {
+        if (nextByte == '\0') {
             return popString();
         }
 

@@ -49,6 +49,7 @@ bool StompProtocol::handleServerInput(std::string msg) {
             idToChannel.clear();
             username = "";
             connected = false;
+            games.clear();
             return true;
         } else if (receiptAttachedFrame.getType() == "SUBSCRIBE") {
             std::cout << "Joined channel " << receiptAttachedFrame.getHeaderValue("destination") << std::endl;
@@ -107,6 +108,11 @@ void StompProtocol::handleUserInput(std::string command) {
             // }
             bool ans = games.find(gameName) != games.end();
             std::cout << "Should be true: " << ans << std::endl;
+
+            if (games.find(gameName) == games.end()) {
+                std::cout << "Can't summrize, you are not registered to " << gameName << ans << std::endl;
+                return;
+            }
 
             if (games.find(gameName) != games.end()) {
                 std::cout << "Found game! " << gameName << " Username: " << userName << std::endl;
@@ -170,6 +176,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("id", std::to_string(id));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
                 receiptToStomp[std::to_string(receiptCounter)] = frame;
+                games.erase(channel);
                 channelToId.erase(channel);
                 idToChannel.erase(id);
                 receiptCounter++;
@@ -219,7 +226,6 @@ void StompProtocol::handleUserInput(std::string command) {
                 std::cout << "Already logged out" << std::endl;
                 return;
             }
-
             frame.setType("DISCONNECT");
             frame.addHeader("receipt", std::to_string(receiptCounter));
             receiptToStomp[std::to_string(receiptCounter)] = frame;

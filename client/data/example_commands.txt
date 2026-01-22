@@ -1,6 +1,6 @@
 mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="7777 tpc"
 login 127.0.0.1:7777 meni 123
-login 127.0.0.1:7777 ishai 222
+login 127.0.0.1:7777 ishai 223
 login 127.0.0.1:7777 tamir 123
 join Germany_Japan
 exit Germany_Japan
@@ -9,7 +9,6 @@ report data/events4.json
 join US_Canada
 exit US_Canada
 report data/events3.json
-summary Germany_Japan ishai data/ishai_summary.txt
 ./bin/StompWCIClient
 ./bin/GeneralTests
 
@@ -34,8 +33,8 @@ join Brazil_Argentina
 exit Brazil_Argentina
 report data/events_out_of_order.json
 
-summary France_England ishai data/ishai_summary.txt
-summary France_England tamir data/ishai_summary.txt
-summary Germany_Japan ishai data/ishai_summary.txt
-summary Germany_Japan tamir data/tamir_suumary.txt
+summary France_England ishai data/ishai_france_england_summary.txt
+summary France_England tamir data/tamir_france_england_summary.txt
+summary Germany_Japan ishai data/ishai_germany_japan_summary.txt
+summary Germany_Japan tamir data/tamir_germany_japan_summary.txt
 summary Brazil_Argentina tamir data/tamir_suumary.txt

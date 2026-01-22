@@ -60,9 +60,11 @@ public abstract class BaseServer<T> implements Server<T> {
                 idGenerator++;
             }
         } catch (IOException ex) {
+            if (sock != null && !sock.isClosed()) {
+                System.err.println("Unexpected error in server loop: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         }
-
-        System.out.println("server closed!!!");
     }
 
     @Override

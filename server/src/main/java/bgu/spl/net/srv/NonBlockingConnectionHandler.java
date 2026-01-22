@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
-    private static final int BUFFER_ALLOCATION_SIZE = 1 << 13; //8k
+    private static final int BUFFER_ALLOCATION_SIZE = 1 << 13; // 8k
     private static final ConcurrentLinkedQueue<ByteBuffer> BUFFER_POOL = new ConcurrentLinkedQueue<>();
 
     private final StompMessagingProtocol<T> protocol;
@@ -34,12 +34,16 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     public Runnable continueRead() {
         ByteBuffer buf = leaseBuffer();
-
         boolean success = false;
         try {
             success = chan.read(buf) != -1;
         } catch (IOException ex) {
-            ex.printStackTrace();
+            if (ex.getMessage() != null && ex.getMessage().contains("Connection reset")) {
+                System.out.println("Client closed socket (Connection reset).");
+            } else {
+                System.out.println("Message failed in thread: " + ex.getMessage());
+                ex.printStackTrace();
+            }
         }
 
         if (success) {
@@ -49,11 +53,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
                     while (buf.hasRemaining()) {
                         T nextMessage = encdec.decodeNextByte(buf.get());
                         if (nextMessage != null) {
-                            // T response = protocol.process(nextMessage);
-                            // if (response != null) {
-                            //     writeQueue.add(ByteBuffer.wrap(encdec.encode(response)));
-                            //     reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                            // }
+                            protocol.process(nextMessage);
                         }
                     }
                 } finally {
@@ -97,8 +97,10 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
         }
 
         if (writeQueue.isEmpty()) {
-            if (protocol.shouldTerminate()) close();
-            else reactor.updateInterestedOps(chan, SelectionKey.OP_READ);
+            if (protocol.shouldTerminate())
+                close();
+            else
+                reactor.updateInterestedOps(chan, SelectionKey.OP_READ);
         }
     }
 
@@ -118,6 +120,10 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
     @Override
     public void send(T msg) {
-        //IMPLEMENT IF NEEDED
+        // IMPLEMENT IF NEEDED
+        if (msg != null) {
+            writeQueue.add(ByteBuffer.wrap(encdec.encode(msg)));
+            reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        }
     }
 }
