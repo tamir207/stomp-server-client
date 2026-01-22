@@ -41,7 +41,8 @@ std::string Game::summarize(const std::string& username) {
         return "";
     }
 
-    std::string res = team_a_name + " vs " + team_b_name + "\n";
+    std::string team_a_name_no_slash = team_a_name.substr(1);
+    std::string res = team_a_name_no_slash + " vs " + team_b_name + "\n";
     res += "Game stats:\n";
 
     std::map<std::string, std::string> gameUpdates;
@@ -65,12 +66,12 @@ std::string Game::summarize(const std::string& username) {
         res += update.first + ": " + update.second + "\n";
     }
 
-    res += team_a_name + " stats:\n";
+    res += team_a_name_no_slash + " stats:\n";
     for (const auto& update : teamAUpdates) {
         res += update.first + ": " + update.second + "\n";
     }
 
-    res += team_b_name + " stats:\n";
+    res += team_a_name_no_slash + " stats:\n";
     for (const auto& update : teamBUpdates) {
         res += update.first + ": " + update.second + "\n";
     }

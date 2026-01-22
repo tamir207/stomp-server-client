@@ -52,7 +52,8 @@ bool StompProtocol::handleServerInput(std::string msg) {
             games.clear();
             return true;
         } else if (receiptAttachedFrame.getType() == "SUBSCRIBE") {
-            std::cout << "Joined channel " << receiptAttachedFrame.getHeaderValue("destination") << std::endl;
+            std::string joined_channel_no_slash = receiptAttachedFrame.getHeaderValue("destination").substr(1);
+            std::cout << "Joined channel " << joined_channel_no_slash << std::endl;
         }
     }
 
@@ -98,7 +99,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 this->username = username;
             }
         } else if (words[0] == "summary") {
-            std::string gameName = words[1];
+            std::string gameName = "/" + words[1];
             std::string userName = words[2];
             std::string filePath = words[3];
             std::cout << "Game name: " << gameName << std::endl;
@@ -145,7 +146,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 return;
             }
 
-            std::string channel = words[1];
+            std::string channel = "/" + words[1];
             if (channelToId.find(channel) == channelToId.end() && connected) {
                 frame.setType("SUBSCRIBE");
                 frame.addHeader("destination", channel);
@@ -168,7 +169,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 return;
             }
 
-            std::string channel = words[1];
+            std::string channel = "/" + words[1];
             auto ind = channelToId.find(channel);
             if (ind != channelToId.end()) {
                 int id = ind->second;
@@ -193,7 +194,7 @@ void StompProtocol::handleUserInput(std::string command) {
 
             try {
                 names_and_events parsed = parseEventsFile(words[1]);
-                std::string gameName = parsed.team_a_name + "_" + parsed.team_b_name;
+                std::string gameName = "/" + parsed.team_a_name + "_" + parsed.team_b_name;
                 if (channelToId.find(gameName) == channelToId.end()) {
                     std::cout << "You have not joined " << gameName << " yet. Can't send report." << std::endl;
                     return;

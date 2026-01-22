@@ -32,22 +32,22 @@ public class Database {
 	 */
 	private String executeSQL(String sql) {
 		try (Socket socket = new Socket(sqlHost, sqlPort);
-			 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-			
+				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
 			// Send SQL with null terminator
 			out.print(sql + '\0');
 			out.flush();
-			
+
 			// Read response until null terminator
 			StringBuilder response = new StringBuilder();
 			int ch;
 			while ((ch = in.read()) != -1 && ch != '\0') {
 				response.append((char) ch);
 			}
-			
+
 			return response.toString();
-			
+
 		} catch (Exception e) {
 			System.err.println("SQL Error: " + e.getMessage());
 			return "ERROR:" + e.getMessage();
@@ -255,4 +255,24 @@ public class Database {
 	public User getUser(int connectionId) {
 		return connectionsIdMap.get(connectionId);
 	}
+
+	public void loadUsersFromDB() {
+		String result = executeSQL("SELECT username, password FROM users");
+		System.out.println(result);
+		if (result.startsWith("SUCCESS")) {
+			String[] parts = result.split("\\|");
+			for (int i = 1; i < parts.length; i++) {
+				String raw = parts[i].replace("(", "").replace(")", "").replace("'", "");
+				String[] fields = raw.split(", ");
+				if (fields.length >= 2) {
+					String username = fields[0];
+					String password = fields[1];
+					User user = new User(-1, username, password);
+					userMap.put(username, user);
+					System.out.println("Username: " + username + "\n Password:" + password);
+				}
+			}
+		}
+	}
+
 }

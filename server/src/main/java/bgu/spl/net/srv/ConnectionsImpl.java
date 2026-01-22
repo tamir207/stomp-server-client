@@ -24,6 +24,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         subscriptions = new ConcurrentHashMap<>();
         messageId = new AtomicInteger(1);
         database = Database.getInstance();
+        database.loadUsersFromDB();
     }
 
     @Override
