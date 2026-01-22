@@ -35,8 +35,6 @@ std::string Game::summarize(const std::string& username) {
         }
     }
 
-    std::cout << "User Events: " << userEvents.size();
-
     if (userEvents.empty()) {
         return "";
     }
@@ -166,5 +164,4 @@ void Game::addEvent(const std::string& singleEvent) {
     });
 
     events.insert(it, newEvent);
-    // std::sort(events.begin(), events.end(), [](const Event& a, const Event& b) { return a.compareTo(b); });
 }

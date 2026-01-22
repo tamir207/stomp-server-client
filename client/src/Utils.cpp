@@ -1,5 +1,4 @@
 #include "../include/Utils.h"
-#include <sstream>
 
 namespace Utils {
 std::vector<std::string> splitNoEmpty(const std::string& s, char delimiter) {
@@ -38,12 +37,10 @@ std::string rtrim(const std::string& s) {
 
 std::string trim(const std::string& s) { return rtrim(ltrim(s)); }
 
-bool writeStringToFile(const std::string& fileName, const std::string& content)
-{
+bool writeStringToFile(const std::string& fileName, const std::string& content) {
     std::ofstream file(fileName, std::ios::out | std::ios::trunc);
 
-    if (!file.is_open())
-    {
+    if (!file.is_open()) {
         return false;
     }
 

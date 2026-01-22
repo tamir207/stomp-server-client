@@ -66,7 +66,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             out.flush();
 
         } catch (IOException ex) {
-            System.out.println("Massesage: " + msg);
+            System.out.println("ERROR Message: " + msg);
             System.err.println("Error sending messages in handler");
             ex.printStackTrace();
         }

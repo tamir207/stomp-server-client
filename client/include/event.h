@@ -44,10 +44,9 @@ public:
     const std::map<std::string, std::string>& get_team_a_updates() const;
     const std::map<std::string, std::string>& get_team_b_updates() const;
     const std::string& get_description() const;
-    bool getBeforeHalftime() const; // TODO
-    void make_second_half_time(); // TODO
+    bool getBeforeHalftime() const;
+    void make_second_half_time();
     void set_username(const std::string& username);
-    // Return -1 if this < other, 0 is this == other, 1 if this > other
     bool compareTo(const Event& other) const;
     std::string toString() const;
 };

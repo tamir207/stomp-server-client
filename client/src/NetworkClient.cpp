@@ -40,7 +40,6 @@ void NetworkClient::disconnect() {
     if (handler != nullptr) {
         delete handler;
         handler = nullptr;
-        std::cout << "NetworkClient: Disconnected and cleaned up." << std::endl;
     }
 }
 
@@ -54,13 +53,17 @@ void NetworkClient::runReadLoop() {
     while (isConnected) {
         std::string frame;
         if (!handler->getFrameAscii(frame, '\0')) {
-            std::cout << "NetworkClient: Server disconnected." << std::endl;
+            std::cout << "Server disconnected" << std::endl;
             break;
         }
 
-        bool shouldTerminate = messageCallback(frame);
-        if (shouldTerminate) {
-            break;
+        try {
+            bool shouldTerminate = messageCallback(frame);
+            if (shouldTerminate) {
+                break;
+            }
+        } catch (const std::exception& e) {
+            std::cout << "Unknown error occurred on server response: " << e.what() << std::endl;
         }
     }
 

@@ -28,16 +28,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         String type = "";
         HashMap<String, String> headers = new HashMap<>();
         String body = "";
-
-        System.out.println("=======================");
-        System.out.println(message);
-        System.out.println("=======================");
-
         String[] lines = message.split("\n");
-
-        System.out.println("=======================");
-        System.out.println("lines---:" + lines);
-        System.out.println("=======================");
         type = lines[0];
         int i = 1;
         for (; i < lines.length && !lines[i].isEmpty(); i++) {
@@ -48,12 +39,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         for (; i < lines.length; i++) {
             body += lines[i] + "\n";
         }
-
-        // if (!connections.isUserConnected(connectionId)) {
-        // System.err.println("[ERROR] Could not find handler for connected id: " +
-        // connectionId);
-        // return;
-        // }
 
         if (!"CONNECT".equals(type) && !connections.isUserConnected(connectionId)) {
             connections.send(connectionId,
@@ -70,10 +55,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 connections.disconnect(connectionId);
                 shouldTerminate = true;
             } else {
-                System.out.println("ffffffffffffffffffffffff");
-                System.out.println(headers.get("passcode"));
-                System.out.println(headers);
-                System.out.println("ffffffffffffffffffffffff");
                 LoginStatus status = connections.addUser(this.connectionId, headers.get("login"),
                         headers.get("passcode"));
 
@@ -83,16 +64,14 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                                     "Client tried to connect with wrong password"));
                     connections.disconnect(this.connectionId);
                     shouldTerminate = true;
-                } else if (LoginStatus.ADDED_NEW_USER.equals(status) || LoginStatus.LOGGED_IN_SUCCESSFULLY.equals(status)) {
-                    System.out.println("::::::::::::::: GOOD CONNECTION ID: :::::::::::::: " + connectionId);
+                } else if (LoginStatus.ADDED_NEW_USER.equals(status)
+                        || LoginStatus.LOGGED_IN_SUCCESSFULLY.equals(status)) {
                     connections.send(connectionId, "CONNECTED\nversion:" + VERSION + "\n\n" + '\0');
                     sendReceipt(headers.get("receipt"));
                 } else if (LoginStatus.ALREADY_LOGGED_IN.equals(status)) {
-                    System.out.println("==================== User already loggin in!!!!!!!!");
                     connections.send(connectionId,
                             generateErrorMessage(headers.get("receipt"), "User already logged in", message,
                                     "User with the same username already logged in"));
-                    System.out.println("::::::::::::::: BAD CONNECTION ID: :::::::::::::: " + connectionId);
                     connections.disconnect(this.connectionId);
                     shouldTerminate = true;
                 } else if (LoginStatus.CLIENT_ALREADY_CONNECTED.equals(status)) {
@@ -184,12 +163,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
                 }
             }
         } else if ("DISCONNECT".equals(type)) {
-            connections.report();
             sendReceipt(headers.get("receipt"));
             connections.disconnect(connectionId);
         }
-        // DELETE
-        System.out.println("Type: " + type + "\nHeaders" + headers.toString() + "\nBody: " + body);
     }
 
     @Override
@@ -220,7 +196,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
             res += description;
         }
 
-        System.out.println("Sending Error: " + res);
         return res + "\n" + '\0';
     }
 

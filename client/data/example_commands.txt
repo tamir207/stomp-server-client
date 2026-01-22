@@ -1,7 +1,9 @@
 mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="7777 tpc"
 login 127.0.0.1:7777 meni 123
+login 127.0.0.1:7777 ishai 222
 login 127.0.0.1:7777 ishai 223
 login 127.0.0.1:7777 tamir 123
+login 127.0.0.1:7777 tamir 123444
 join Germany_Japan
 exit Germany_Japan
 report data/events1.json

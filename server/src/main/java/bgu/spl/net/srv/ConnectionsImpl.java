@@ -9,14 +9,11 @@ import bgu.spl.net.impl.data.LoginStatus;
 import bgu.spl.net.impl.data.User;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-    private final Map<Integer, ConnectionHandler<T>> connectedHandlers;// Map<SubscriptionID, ConnectionHandler<T>>
-    private final Map<String, Map<Integer, String>> channels;// Map<ChannelName, Map<ConnectionID, SubscriptionID>>
-    private final Map<Integer, Map<String, String>> subscriptions;// Map<ConnectionID, Map<SubscriptionID, ChannelName>>
+    private final Map<Integer, ConnectionHandler<T>> connectedHandlers;
+    private final Map<String, Map<Integer, String>> channels;
+    private final Map<Integer, Map<String, String>> subscriptions;
     private AtomicInteger messageId;
-
     private final Database database;
-
-    // Persistant data between sessions:
 
     public ConnectionsImpl() {
         connectedHandlers = new ConcurrentHashMap<>();
@@ -54,6 +51,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
             if (handler != null)
                 handler.send(msg);
         }
+
         messageId.incrementAndGet();
     }
 
@@ -62,14 +60,15 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (topic == null) {
             return false;
         }
+
         synchronized (this) {
             Map<Integer, String> foundTopic = channels.get(topic);
             if (foundTopic == null) {
                 channels.put(topic, new ConcurrentHashMap<>());
                 foundTopic = channels.get(topic);
             }
-            foundTopic.put(connectionId, subscriptionId);
 
+            foundTopic.put(connectionId, subscriptionId);
             Map<String, String> userSubs = subscriptions.get(connectionId);
 
             if (userSubs == null) {
@@ -79,6 +78,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
             }
             userSubs.put(subscriptionId, topic);
         }
+
         return true;
     }
 
@@ -99,7 +99,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (connectedHandlers.containsKey(connectionId))
             return false;
         connectedHandlers.put(connectionId, handler);
-        System.out.println("ADDED NEW CLIENT: " + connectionId);
         return true;
     }
 
@@ -112,7 +111,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public void disconnect(int connectionId) {
         database.logout(connectionId);
         connectedHandlers.remove(connectionId);
-
         Map<String, String> userSubs = subscriptions.get(connectionId);
         subscriptions.remove(connectionId);
         if (userSubs != null) {

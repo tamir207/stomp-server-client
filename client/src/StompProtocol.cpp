@@ -22,11 +22,6 @@ StompProtocol::~StompProtocol() { networkClient.disconnect(); }
 
 bool StompProtocol::handleServerInput(std::string msg) {
     Frame frame = Frame(msg);
-    std::cout << "Frame body FIRSTTTTTTTTT: " << frame.getBody() << std::endl;
-
-    std::cout << "------------STOMP-RECEIVED------------" << std::endl;
-    std::cout << msg << std::endl;
-    std::cout << "------------STOMP-RECEIVED------------" << std::endl;
     if (frame.getType() == "ERROR") {
         std::cout << frame.getHeaderValue("message") << std::endl;
         return true;
@@ -37,12 +32,10 @@ bool StompProtocol::handleServerInput(std::string msg) {
         auto it = games.find(frame.getHeaderValue("destination"));
         if (it != games.end()) {
             Game& game = it->second;
-            std::cout << "Frame body: " << frame.getBody() << std::endl;
             game.addEvent(frame.getBody());
         }
     } else if (frame.getType() == "RECEIPT") {
         Frame receiptAttachedFrame = receiptToStomp[frame.getHeaderValue("receipt-id")];
-        std::cout << "Receipt Stomp Command: " << receiptAttachedFrame.getType() << std::endl;
         if (receiptAttachedFrame.getType() == "DISCONNECT") {
             std::cout << "Disconnected" << std::endl;
             channelToId.clear();
@@ -54,6 +47,14 @@ bool StompProtocol::handleServerInput(std::string msg) {
         } else if (receiptAttachedFrame.getType() == "SUBSCRIBE") {
             std::string joined_channel_no_slash = receiptAttachedFrame.getHeaderValue("destination").substr(1);
             std::cout << "Joined channel " << joined_channel_no_slash << std::endl;
+        } else if (receiptAttachedFrame.getType() == "UNSUBSCRIBE") {
+            int subscriptionId = std::stoi(receiptAttachedFrame.getHeaderValue("id"));
+            std::string exited_channel = idToChannel[subscriptionId];
+            std::string exited_channel_no_slash = exited_channel.substr(1);
+            games.erase(exited_channel);
+            channelToId.erase(exited_channel);
+            idToChannel.erase(subscriptionId);
+            std::cout << "Exited channel " << exited_channel_no_slash << std::endl;
         }
     }
 
@@ -73,7 +74,7 @@ void StompProtocol::handleUserInput(std::string command) {
     if (len >= 4) {
         if (words[0] == "login") {
             if (connected) {
-                std::cout << "The client is already logged in, log out before trying again\n" << std::endl;
+                std::cout << "\nThe client is already logged in, log out before trying again\n" << std::endl;
                 return;
             }
             size_t colonPos = words[1].find(':');
@@ -83,9 +84,14 @@ void StompProtocol::handleUserInput(std::string command) {
                 std::string username = words[2];
                 std::string passcode = words[3];
                 short shortPort = static_cast<short>(std::stoi(port));
-                networkClient.connect(host, shortPort, [this](std::string msg) {
+                bool connected = networkClient.connect(host, shortPort, [this](std::string msg) {
                     return this->handleServerInput(msg);
                 });
+
+                if (!connected) {
+                    std::cout << "\nCould not connect to server\n" << std::endl;
+                    return;
+                }
 
                 frame.setType("CONNECT");
                 frame.addHeader("accept-version", "1.2");
@@ -102,32 +108,23 @@ void StompProtocol::handleUserInput(std::string command) {
             std::string gameName = "/" + words[1];
             std::string userName = words[2];
             std::string filePath = words[3];
-            std::cout << "Game name: " << gameName << std::endl;
-
-            // for (const auto& [gameName, gameObj] : games) {
-            //     std::cout << "Game key: " << gameName << std::endl;
-            // }
             bool ans = games.find(gameName) != games.end();
-            std::cout << "Should be true: " << ans << std::endl;
-
             if (games.find(gameName) == games.end()) {
-                std::cout << "Can't summrize, you are not registered to " << gameName << ans << std::endl;
+                std::cout << "\nCan't summrize, you are not registered to " << gameName << ans << "\n" << std::endl;
                 return;
             }
 
             if (games.find(gameName) != games.end()) {
-                std::cout << "Found game! " << gameName << " Username: " << userName << std::endl;
                 std::string summaryOutput = games.at(gameName).summarize(userName);
-                std::cout << "********************* summary output: **************************\n"
-                          << summaryOutput << std::endl;
-
                 if (summaryOutput.empty()) {
-                    std::cout << "The user " << userName << " has not reported on the game " << gameName << std::endl;
+                    std::cout << "\nThe user " << userName << " has not reported on the game " << gameName.substr(1)
+                              << "\n"
+                              << std::endl;
                 } else {
                     if (Utils::writeStringToFile(filePath, summaryOutput))
                         std::cout << "Write successful\n";
                     else
-                        std::cout << "Write failed\n";
+                        std::cout << "\nWrite failed\n";
 
                     std::ofstream fileStream(filePath);
                     if (fileStream.is_open()) {
@@ -142,7 +139,7 @@ void StompProtocol::handleUserInput(std::string command) {
     } else if (len >= 2) {
         if (words[0] == "join") {
             if (!connected) {
-                std::cout << "Please login first" << std::endl;
+                std::cout << "\nPlease login first\n" << std::endl;
                 return;
             }
 
@@ -161,11 +158,11 @@ void StompProtocol::handleUserInput(std::string command) {
                 receiptCounter++;
                 isValidCommand = true;
             } else {
-                std::cout << "You are already subscribed to " << channel << std::endl;
+                std::cout << "\nYou are already subscribed to " << channel << "\n" << std::endl;
             }
         } else if (words[0] == "exit") {
             if (!connected) {
-                std::cout << "Please login first" << std::endl;
+                std::cout << "\nPlease login first\n" << std::endl;
                 return;
             }
 
@@ -177,18 +174,15 @@ void StompProtocol::handleUserInput(std::string command) {
                 frame.addHeader("id", std::to_string(id));
                 frame.addHeader("receipt", std::to_string(receiptCounter));
                 receiptToStomp[std::to_string(receiptCounter)] = frame;
-                games.erase(channel);
-                channelToId.erase(channel);
-                idToChannel.erase(id);
                 receiptCounter++;
                 isValidCommand = true;
             } else {
-                std::cout << "Can't exit because you are not subscribed to " << channel << std::endl;
+                std::cout << "\nCan't exit because you are not subscribed to " << channel << "\n" << std::endl;
                 return;
             }
         } else if (words[0] == "report") {
             if (!connected) {
-                std::cout << "Please login first" << std::endl;
+                std::cout << "\nPlease login first\n" << std::endl;
                 return;
             }
 
@@ -196,7 +190,7 @@ void StompProtocol::handleUserInput(std::string command) {
                 names_and_events parsed = parseEventsFile(words[1]);
                 std::string gameName = "/" + parsed.team_a_name + "_" + parsed.team_b_name;
                 if (channelToId.find(gameName) == channelToId.end()) {
-                    std::cout << "You have not joined " << gameName << " yet. Can't send report." << std::endl;
+                    std::cout << "\nYou have not joined " << gameName << " yet. Can't send report.\n" << std::endl;
                     return;
                 }
 
@@ -224,7 +218,7 @@ void StompProtocol::handleUserInput(std::string command) {
     } else if (len >= 1) {
         if (words[0] == "logout") {
             if (!connected) {
-                std::cout << "Already logged out" << std::endl;
+                std::cout << "\nAlready logged out\n" << std::endl;
                 return;
             }
             frame.setType("DISCONNECT");
@@ -236,14 +230,10 @@ void StompProtocol::handleUserInput(std::string command) {
     }
 
     if (isValidCommand && !report && !networkClient.sendFrame(frame.toString())) {
-        std::cout << "Failed to send frame to server. Unexpected Issue" << std::endl;
-        // std::cout << "Disconnected. Failed to handleUserInput frame." << std::endl;
-        std::cout << "--------------STOMP-SEND--------------" << std::endl;
-        std::cout << frame.toString() << std::endl;
-        std::cout << "--------------STOMP-SEND--------------" << std::endl;
+        std::cout << "\nCould not connect to server\n" << std::endl;
         return;
     } else if (!isValidCommand) {
-        std::cout << "Please enter a valid command" << std::endl;
+        std::cout << "\nPlease enter a valid command\n" << std::endl;
     }
 
     this->report = false;

@@ -23,15 +23,13 @@ int main (int argc, char *argv[]) {
         const short bufsize = 1024;
         char buf[bufsize];
         std::cin.getline(buf, bufsize);
-		// std::string line(buf);
-        std::string line = "CONNECT\nreceipt: 12\n";
-        line += '\0';
+		std::string line(buf);
 		int len=line.length();
         if (!connectionHandler.sendLine(line)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
         }
-		// connectionHandler.sendLine(line) appends '\n' to the message. Therefor we handleUserInput len+1 bytes.
+		// connectionHandler.sendLine(line) appends '\n' to the message. Therefor we send len+1 bytes.
         std::cout << "Sent " << len+1 << " bytes to server" << std::endl;
 
  
